@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحة الفلوس</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --bg:#f6f4f8; --card:#fff; --ink:#1d1b20; --muted:#6b6670; --accent:#d6336c; --line:#ece8ef; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151316; --card:#211e23; --ink:#f2eff4; --muted:#a59fa9; --line:#2f2b31; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,"Segoe UI",Tahoma,sans-serif; }
+  header { background:var(--accent); color:#fff; padding:16px 16px 12px; }
+  header h1 { margin:0 0 10px; font-size:18px; }
+  .tabs { display:flex; gap:6px; }
+  .tabs button { flex:1; border:0; border-radius:10px; padding:8px 4px; background:rgba(255,255,255,.2); color:#fff; font-size:14px; }
+  .tabs button.on { background:#fff; color:var(--accent); font-weight:700; }
+  main { padding:12px 16px 32px; }
+  .card { background:var(--card); border-radius:16px; padding:14px; margin-bottom:12px; }
+  .kpis { display:flex; gap:8px; }
+  .kpi { flex:1; text-align:center; }
+  .kpi b { display:block; font-size:20px; }
+  .kpi span { color:var(--muted); font-size:12px; }
+  .donut { display:flex; align-items:center; gap:14px; }
+  .donut svg { width:140px; height:140px; flex:none; }
+  .legend { flex:1; font-size:13px; }
+  .legend div { display:flex; justify-content:space-between; margin:4px 0; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:6px; }
+  .bar { margin:10px 0; }
+  .bar .row { display:flex; justify-content:space-between; font-size:14px; }
+  .bar .track { height:6px; background:var(--line); border-radius:3px; margin-top:4px; }
+  .bar .fill { height:6px; border-radius:3px; }
+  .day h3 { font-size:13px; color:var(--muted); margin:14px 0 6px; display:flex; justify-content:space-between; }
+  .item { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .item small { color:var(--muted); display:block; }
+  .msg { text-align:center; color:var(--muted); padding:40px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>💸 لوحة الفلوس</h1>
+  <div class="tabs">
+    <button data-p="week">الأسبوع</button>
+    <button data-p="month" class="on">الشهر ده</button>
+    <button data-p="last_month">الشهر اللي فات</button>
+  </div>
+</header>
+<main id="app"><div class="msg">بيحمّل…</div></main>
+<script>
+const API = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-data';
+const COLORS = ['#d6336c','#f59f00','#37b24d','#1c7ed6','#7048e8','#0ca678','#e8590c','#868e96'];
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+const app = document.getElementById('app');
+const fmt = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const SRC = { email_alhilal: '📧 الهلال', bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
+
+function donut(cats, total) {
+  if (!total) return '';
+  let a = 0, paths = '';
+  cats.forEach((c, i) => {
+    const f = Math.max(0, c.total) / total; if (!f) return;
+    const a2 = a + f * 2 * Math.PI, large = f > 0.5 ? 1 : 0;
+    const p = (t) => [70 + 60 * Math.sin(t), 70 - 60 * Math.cos(t)];
+    const [x1, y1] = p(a), [x2, y2] = p(a2 - 1e-6);
+    paths += `<path d="M${x1} ${y1} A60 60 0 ${large} 1 ${x2} ${y2}" stroke="${COLORS[i % COLORS.length]}" stroke-width="20" fill="none"/>`;
+    a = a2;
+  });
+  return `<svg viewBox="0 0 140 140">${paths}<text x="70" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor">${fmt(total)}</text></svg>`;
+}
+
+function render(d) {
+  const total = Number(d.total_expense), cats = d.by_category || [];
+  let h = `<div class="card kpis">
+    <div class="kpi"><b>${fmt(d.total_expense)}</b><span>نفقات (درهم)</span></div>
+    <div class="kpi"><b>${fmt(d.total_income)}</b><span>دخل (درهم)</span></div>
+    <div class="kpi"><b>${fmt(d.total_income - d.total_expense)}</b><span>الفرق</span></div></div>`;
+  if (!cats.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
+  h += `<div class="card donut">${donut(cats, total)}<div class="legend">` +
+    cats.map((c, i) => `<div><span><i class="dot" style="background:${COLORS[i % COLORS.length]}"></i>${esc(c.category)}</span><span>${total ? Math.round(c.total / total * 100) : 0}%</span></div>`).join('') +
+    `</div></div><div class="card">` +
+    cats.map((c, i) => `<div class="bar"><div class="row"><span>${esc(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
+      <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${COLORS[i % COLORS.length]}"></div></div></div>`).join('') +
+    `</div><div class="card">` +
+    (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${fmt(day.total)}</span></h3>` +
+      day.items.map((it) => `<div class="item"><div>${esc(it.note || it.category)}<small>${esc(it.category)} · ${SRC[it.source] || ''} · ${esc(it.time)}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`).join('') +
+      `</div>`).join('') + `</div>`;
+  app.innerHTML = h;
+}
+
+async function load(period) {
+  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.p === period));
+  if (!tg || !tg.initData) { app.innerHTML = '<div class="msg">افتح اللوحة من زرار البوت في تليجرام.</div>'; return; }
+  app.innerHTML = '<div class="msg">بيحمّل…</div>';
+  try {
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, period }) });
+    if (!r.ok) { app.innerHTML = `<div class="msg">مش مسموح (${r.status}).</div>`; return; }
+    render(await r.json());
+  } catch { app.innerHTML = '<div class="msg">في عطل في الاتصال. جرّب تاني.</div>'; }
+}
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => load(b.dataset.p)));
+load('month');
+</script>
+</body>
+</html>
