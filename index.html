@@ -21,11 +21,13 @@
   .kpi { flex:1; text-align:center; }
   .kpi b { display:block; font-size:20px; }
   .kpi span { color:var(--muted); font-size:12px; }
-  .kpi b, .item b { direction:ltr; unicode-bidi:isolate; }
+  .kpi b, .item b, .day h3 span, .ltr { direction:ltr; unicode-bidi:isolate; }
   .donut { display:flex; align-items:center; gap:14px; }
   .donut svg { width:140px; height:140px; flex:none; }
   .legend { flex:1; font-size:13px; }
-  .legend div { display:flex; justify-content:space-between; margin:4px 0; }
+  .legend div { display:flex; align-items:center; gap:8px; margin:4px 0; }
+  .legend b { color:var(--muted); font-weight:600; direction:ltr; unicode-bidi:isolate; }
+  .daily { text-align:center; color:var(--muted); font-size:13px; margin:-4px 0 12px; }
   .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:6px; }
   .bar { margin:10px 0; }
   .bar .row { display:flex; justify-content:space-between; font-size:14px; }
@@ -54,6 +56,15 @@ const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 const app = document.getElementById('app');
 const fmt = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+// علامة سالب واحدة في اللوحة كلها: «−».
+const signed = (n) => (Number(n) < 0 ? '−' : '') + fmt(Math.abs(Number(n)));
+function daily(l) {
+  if (!l || !l.day) return '';
+  const day = `<span class="ltr">${esc(l.day)}</span>`;
+  if (l.status !== 'sent') return `<div class="daily">⚠️ ملخص يوم ${day} ما اتبعتش</div>`;
+  const t = new Date(l.sent_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' });
+  return `<div class="daily">🌙 آخر ملخص: يوم ${day}، اتبعت الساعة <span class="ltr">${t}</span></div>`;
+}
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const SRC = { email_alhilal: '📧 الهلال', bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
 
@@ -76,15 +87,15 @@ function render(d) {
   let h = `<div class="card kpis">
     <div class="kpi"><b>${fmt(d.total_expense)}</b><span>نفقات (درهم)</span></div>
     <div class="kpi"><b>${fmt(d.total_income)}</b><span>دخل (درهم)</span></div>
-    <div class="kpi"><b>${fmt(d.total_income - d.total_expense)}</b><span>الفرق</span></div></div>`;
+    <div class="kpi"><b>${signed(d.total_income - d.total_expense)}</b><span>الفرق</span></div></div>` + daily(d.last_daily);
   if (!cats.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
   h += `<div class="card donut">${donut(cats, total)}<div class="legend">` +
-    cats.map((c, i) => `<div><span><i class="dot" style="background:${COLORS[i % COLORS.length]}"></i>${esc(c.category)}</span><span>${total ? Math.round(c.total / total * 100) : 0}%</span></div>`).join('') +
+    cats.map((c, i) => `<div><span><i class="dot" style="background:${COLORS[i % COLORS.length]}"></i>${esc(c.category)}</span><b>${total ? Math.round(c.total / total * 100) : 0}%</b></div>`).join('') +
     `</div></div><div class="card">` +
     cats.map((c, i) => `<div class="bar"><div class="row"><span>${esc(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
       <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${COLORS[i % COLORS.length]}"></div></div></div>`).join('') +
     `</div><div class="card">` +
-    (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${fmt(day.total)}</span></h3>` +
+    (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
       day.items.map((it) => `<div class="item"><div>${esc(it.note || it.category)}<small>${esc(it.category)} · ${SRC[it.source] || ''} · ${esc(it.time)}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`).join('') +
       `</div>`).join('') + `</div>`;
   app.innerHTML = h;
