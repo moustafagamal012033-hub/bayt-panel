@@ -52,6 +52,10 @@
 <script>
 const API = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-data';
 const COLORS = ['#d6336c','#f59f00','#37b24d','#1c7ed6','#7048e8','#0ca678','#e8590c','#868e96'];
+// تصنيف ليه لون وأيقونة ثابتين، والباقي بياخد لون من القايمة بالترتيب.
+const STYLE = { 'إلكترونيات': { color: '#9b8cf2', icon: '🖥️' } };
+const color = (c, i) => (STYLE[c] && STYLE[c].color) || COLORS[i % COLORS.length];
+const label = (c) => (STYLE[c] ? STYLE[c].icon + ' ' : '') + esc(c);
 const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 const app = document.getElementById('app');
@@ -76,7 +80,7 @@ function donut(cats, total) {
     const a2 = a + f * 2 * Math.PI, large = f > 0.5 ? 1 : 0;
     const p = (t) => [70 + 60 * Math.sin(t), 70 - 60 * Math.cos(t)];
     const [x1, y1] = p(a), [x2, y2] = p(a2 - 1e-6);
-    paths += `<path d="M${x1} ${y1} A60 60 0 ${large} 1 ${x2} ${y2}" stroke="${COLORS[i % COLORS.length]}" stroke-width="20" fill="none"/>`;
+    paths += `<path d="M${x1} ${y1} A60 60 0 ${large} 1 ${x2} ${y2}" stroke="${color(c.category, i)}" stroke-width="20" fill="none"/>`;
     a = a2;
   });
   return `<svg viewBox="0 0 140 140">${paths}<text x="70" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor">${fmt(total)}</text></svg>`;
@@ -90,13 +94,13 @@ function render(d) {
     <div class="kpi"><b>${signed(d.total_income - d.total_expense)}</b><span>الفرق</span></div></div>` + daily(d.last_daily);
   if (!cats.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
   h += `<div class="card donut">${donut(cats, total)}<div class="legend">` +
-    cats.map((c, i) => `<div><span><i class="dot" style="background:${COLORS[i % COLORS.length]}"></i>${esc(c.category)}</span><b>${total ? Math.round(c.total / total * 100) : 0}%</b></div>`).join('') +
+    cats.map((c, i) => `<div><span><i class="dot" style="background:${color(c.category, i)}"></i>${label(c.category)}</span><b>${total ? Math.round(c.total / total * 100) : 0}%</b></div>`).join('') +
     `</div></div><div class="card">` +
-    cats.map((c, i) => `<div class="bar"><div class="row"><span>${esc(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${COLORS[i % COLORS.length]}"></div></div></div>`).join('') +
+    cats.map((c, i) => `<div class="bar"><div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
+      <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${color(c.category, i)}"></div></div></div>`).join('') +
     `</div><div class="card">` +
     (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
-      day.items.map((it) => `<div class="item"><div>${esc(it.note || it.category)}<small>${esc(it.category)} · ${SRC[it.source] || ''} · ${esc(it.time)}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`).join('') +
+      day.items.map((it) => `<div class="item"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${SRC[it.source] || ''} · ${esc(it.time)}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`).join('') +
       `</div>`).join('') + `</div>`;
   app.innerHTML = h;
 }
