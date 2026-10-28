@@ -37,12 +37,20 @@
   .item { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
   .item small { color:var(--muted); display:block; }
   .msg { text-align:center; color:var(--muted); padding:40px 0; }
-  .cmd { border-right:4px solid var(--st); }
-  .cmd .top { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); }
-  .cmd .pill { background:var(--st); color:#fff; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:700; }
-  .cmd .body { margin:8px 0 0; font-size:14px; line-height:1.6; }
-  .cmd .note { margin-top:10px; padding:8px 10px; border-radius:10px; background:var(--line); font-size:13px; line-height:1.7; white-space:pre-line; }
-  .cmd.done { --st:#2f9e44; } .cmd.waiting { --st:#f08c00; } .cmd.pulled { --st:#868e96; }
+  .stat { flex:1; text-align:center; border-radius:12px; padding:10px; background:var(--card); }
+  .stat b { display:block; font-size:24px; color:var(--st); }
+  .stat span { font-size:12px; color:var(--st); }
+  .cmd { padding:12px 14px; cursor:pointer; }
+  .cmd .row { display:flex; align-items:center; gap:10px; }
+  .cmd .ic { font-size:22px; flex:none; }
+  .cmd .tt { flex:1; min-width:0; }
+  .cmd .tt b { display:block; font-size:15px; }
+  .cmd .tt small { display:block; color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cmd .ago { font-size:12px; color:var(--muted); flex:none; }
+  .cmd .next { margin-top:8px; padding:6px 10px; border-radius:10px; background:var(--line); font-size:13px; }
+  .cmd .more { display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); line-height:1.7; }
+  .cmd.open .more { display:block; }
+  .done { --st:#2f9e44; } .waiting, .pulled { --st:#f08c00; }
 </style>
 </head>
 <body>
@@ -112,21 +120,39 @@ function render(d) {
   app.innerHTML = h;
 }
 
-// تبويب «الأوامر»: كارت لكل أمر من درج البوت، ولونه على حسب حالته.
-const CMD_ST = { done: '✅ اتنفّذ', waiting: '🟡 مستني', pulled: '⏳ اتسحب' };
+// تبويب «الأوامر»: نظرة سريعة. كارت مقفول فيه الحالة والعنوان والنتيجة و«👣 الجاي»،
+// ورسالة مصطفى والأوقات بتفتح لما يدوس (اختيار مصطفى ١، 2026-10-28).
+function ago(ts) {
+  const m = Math.max(0, Math.round((Date.now() / 1000 - Number(ts)) / 60));
+  if (m < 1) return 'دلوقتي';
+  if (m < 60) return `من ${m} دقيقة`;
+  const h = Math.round(m / 60);
+  if (h < 24) return h === 1 ? 'من ساعة' : h === 2 ? 'من ساعتين' : `من ${h} ساعات`;
+  const d = Math.round(h / 24);
+  return d === 1 ? 'من يوم' : d === 2 ? 'من يومين' : `من ${d} أيام`;
+}
+const firstWords = (s) => String(s ?? '').trim().replace(/^\.\s*/, '').split(/\s+/).slice(0, 3).join(' ');
 function renderCommands(list) {
   if (!list.length) return app.innerHTML = '<div class="msg">مفيش أوامر لسه. ابعت للبوت سطر أوله نقطة.</div>';
-  const n = (s) => list.filter((c) => c.status === s).length;
-  app.innerHTML = `<div class="card kpis">
-    <div class="kpi"><b>${list.length}</b><span>كل الأوامر</span></div>
-    <div class="kpi"><b>${n('done')}</b><span>اتنفّذ</span></div>
-    <div class="kpi"><b>${n('waiting') + n('pulled')}</b><span>مستني</span></div></div>` +
-    list.map((c) => `<div class="card cmd ${esc(c.status)}">
-      <div class="top"><span>أمر رقم <span class="ltr">${esc(c.id)}</span> · 📥 <span class="ltr">${esc(c.received)}</span></span><span class="pill">${CMD_ST[c.status] || ''}</span></div>
-      <div class="body">${esc(c.body)}</div>
-      ${c.note ? `<div class="note">${esc(c.note)}</div>` : ''}
-      ${c.done ? `<div class="top" style="margin-top:8px"><span>✔️ اتنفّذ <span class="ltr">${esc(c.done)}</span></span></div>` : ''}
-    </div>`).join('');
+  const done = list.filter((c) => c.status === 'done').length;
+  app.innerHTML = `<div class="kpis" style="margin-bottom:12px">
+    <div class="stat waiting"><b>${list.length - done}</b><span>مستني</span></div>
+    <div class="stat done"><b>${done}</b><span>اتنفّذ</span></div></div>` +
+    list.map((c) => {
+      const ok = c.status === 'done';
+      const lines = String(c.note ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
+      const next = lines.filter((l) => l.startsWith('👣')).join(' · ');
+      const sub = ok ? lines.filter((l) => !l.startsWith('👣')).join(' · ') : 'مستني جلسة كلود';
+      const title = c.title || firstWords(c.body);
+      return `<div class="card cmd ${esc(c.status)}">
+        <div class="row"><span class="ic">${ok ? '✅' : '⏳'}</span>
+          <div class="tt"><b>${esc(title)}</b><small>${esc(sub)}</small></div>
+          <span class="ago">${ago(c.ts)}</span></div>
+        ${next ? `<div class="next">${esc(next)}</div>` : ''}
+        <div class="more">رسالتك: «${esc(c.body)}»<br>وصل <span class="ltr">${esc(c.received)}</span>${c.done ? ` · اتنفّذ <span class="ltr">${esc(c.done)}</span>` : ''}</div>
+      </div>`;
+    }).join('');
+  app.querySelectorAll('.cmd').forEach((el) => el.addEventListener('click', () => el.classList.toggle('open')));
 }
 
 async function load(period) {
