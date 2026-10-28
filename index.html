@@ -37,6 +37,12 @@
   .item { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
   .item small { color:var(--muted); display:block; }
   .msg { text-align:center; color:var(--muted); padding:40px 0; }
+  .cmd { border-right:4px solid var(--st); }
+  .cmd .top { display:flex; justify-content:space-between; align-items:center; font-size:13px; color:var(--muted); }
+  .cmd .pill { background:var(--st); color:#fff; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:700; }
+  .cmd .body { margin:8px 0 0; font-size:14px; line-height:1.6; }
+  .cmd .note { margin-top:10px; padding:8px 10px; border-radius:10px; background:var(--line); font-size:13px; line-height:1.7; white-space:pre-line; }
+  .cmd.done { --st:#2f9e44; } .cmd.waiting { --st:#f08c00; } .cmd.pulled { --st:#868e96; }
 </style>
 </head>
 <body>
@@ -46,6 +52,7 @@
     <button data-p="week">الأسبوع</button>
     <button data-p="month" class="on">الشهر ده</button>
     <button data-p="last_month">الشهر اللي فات</button>
+    <button data-p="commands">📋 الأوامر</button>
   </div>
 </header>
 <main id="app"><div class="msg">بيحمّل…</div></main>
@@ -105,18 +112,38 @@ function render(d) {
   app.innerHTML = h;
 }
 
+// تبويب «الأوامر»: كارت لكل أمر من درج البوت، ولونه على حسب حالته.
+const CMD_ST = { done: '✅ اتنفّذ', waiting: '🟡 مستني', pulled: '⏳ اتسحب' };
+function renderCommands(list) {
+  if (!list.length) return app.innerHTML = '<div class="msg">مفيش أوامر لسه. ابعت للبوت سطر أوله نقطة.</div>';
+  const n = (s) => list.filter((c) => c.status === s).length;
+  app.innerHTML = `<div class="card kpis">
+    <div class="kpi"><b>${list.length}</b><span>كل الأوامر</span></div>
+    <div class="kpi"><b>${n('done')}</b><span>اتنفّذ</span></div>
+    <div class="kpi"><b>${n('waiting') + n('pulled')}</b><span>مستني</span></div></div>` +
+    list.map((c) => `<div class="card cmd ${esc(c.status)}">
+      <div class="top"><span>أمر رقم <span class="ltr">${esc(c.id)}</span> · 📥 <span class="ltr">${esc(c.received)}</span></span><span class="pill">${CMD_ST[c.status] || ''}</span></div>
+      <div class="body">${esc(c.body)}</div>
+      ${c.note ? `<div class="note">${esc(c.note)}</div>` : ''}
+      ${c.done ? `<div class="top" style="margin-top:8px"><span>✔️ اتنفّذ <span class="ltr">${esc(c.done)}</span></span></div>` : ''}
+    </div>`).join('');
+}
+
 async function load(period) {
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.p === period));
   if (!tg || !tg.initData) { app.innerHTML = '<div class="msg">افتح اللوحة من زرار البوت في تليجرام.</div>'; return; }
   app.innerHTML = '<div class="msg">بيحمّل…</div>';
+  const commands = period === 'commands';
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, period }) });
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(commands ? { initData: tg.initData, view: 'commands' } : { initData: tg.initData, period }) });
     if (!r.ok) { app.innerHTML = `<div class="msg">مش مسموح (${r.status}).</div>`; return; }
-    render(await r.json());
+    const d = await r.json();
+    commands ? renderCommands(d.commands || []) : render(d);
   } catch { app.innerHTML = '<div class="msg">في عطل في الاتصال. جرّب تاني.</div>'; }
 }
 document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => load(b.dataset.p)));
-load('month');
+load(new URLSearchParams(location.search).get('tab') === 'commands' ? 'commands' : 'month');
 </script>
 </body>
 </html>
