@@ -51,6 +51,8 @@
   .cmd .more { display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--line); font-size:12px; color:var(--muted); line-height:1.7; }
   .cmd.open .more { display:block; }
   .done { --st:#2f9e44; } .waiting, .pulled { --st:#f08c00; }
+  .stat { cursor:pointer; border:2px solid transparent; }
+  .stat.on { border-color:var(--st); }
 </style>
 </head>
 <body>
@@ -132,13 +134,17 @@ function ago(ts) {
   return d === 1 ? 'من يوم' : d === 2 ? 'من يومين' : `من ${d} أيام`;
 }
 const firstWords = (s) => String(s ?? '').trim().replace(/^\.\s*/, '').split(/\s+/).slice(0, 3).join(' ');
+// الرقمين فوق فلاتر: دوسة توري نوع واحد، والدوسة التانية على نفس الرقم ترجّع الكل (اختيار مصطفى ١، 2026-10-28).
+let cmdFilter = null;
 function renderCommands(list) {
   if (!list.length) return app.innerHTML = '<div class="msg">مفيش أوامر لسه. ابعت للبوت سطر أوله نقطة.</div>';
   const done = list.filter((c) => c.status === 'done').length;
+  const shown = list.filter((c) => !cmdFilter || (cmdFilter === 'done') === (c.status === 'done'));
   app.innerHTML = `<div class="kpis" style="margin-bottom:12px">
-    <div class="stat waiting"><b>${list.length - done}</b><span>مستني</span></div>
-    <div class="stat done"><b>${done}</b><span>اتنفّذ</span></div></div>` +
-    list.map((c) => {
+    <div class="stat waiting${cmdFilter === 'waiting' ? ' on' : ''}" data-f="waiting"><b>${list.length - done}</b><span>مستني</span></div>
+    <div class="stat done${cmdFilter === 'done' ? ' on' : ''}" data-f="done"><b>${done}</b><span>اتنفّذ</span></div></div>` +
+    (shown.length ? '' : '<div class="msg">مفيش أوامر هنا.</div>') +
+    shown.map((c) => {
       const ok = c.status === 'done';
       const lines = String(c.note ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
       const next = lines.filter((l) => l.startsWith('👣')).join(' · ');
@@ -153,6 +159,10 @@ function renderCommands(list) {
       </div>`;
     }).join('');
   app.querySelectorAll('.cmd').forEach((el) => el.addEventListener('click', () => el.classList.toggle('open')));
+  app.querySelectorAll('.stat').forEach((el) => el.addEventListener('click', () => {
+    cmdFilter = cmdFilter === el.dataset.f ? null : el.dataset.f;
+    renderCommands(list);
+  }));
 }
 
 async function load(period) {
