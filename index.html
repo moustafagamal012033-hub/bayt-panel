@@ -119,6 +119,18 @@
   .cb b { display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .cb small { display:block; font-size:11px; color:var(--muted); }
   .cb small span { direction:ltr; unicode-bidi:isolate; }
+  /* موجة ٣: زراير التعديل في شباك الحركة، واللي اتلغى بيبان باهت ومشطوب. */
+  .acts { display:flex; gap:8px; margin-top:14px; }
+  .acts button { flex:1; border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:12px; padding:11px 6px; font-size:14px; }
+  .acts button.warn { color:var(--red); border-color:color-mix(in srgb, var(--red) 40%, transparent); }
+  .acts button.sure { background:var(--red); color:#fff; border-color:var(--red); }
+  .lock { margin-top:14px; padding:10px 12px; border-radius:12px; background:var(--bg); color:var(--muted); font-size:13px; line-height:1.6; }
+  .cats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
+  .cats button { border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:12px; padding:11px 6px; font-size:14px; }
+  .cats button.on { border-color:var(--accent); color:var(--accent); font-weight:700; }
+  .toast { text-align:center; padding:14px 0 4px; font-size:15px; }
+  .item.cx { opacity:.55; }
+  .item.cx b { text-decoration:line-through; }
 </style>
 </head>
 <body>
@@ -135,6 +147,7 @@
 <div id="sheet" class="sheet"></div>
 <script>
 const API = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-data';
+const WRITE = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-write';
 const COLORS = ['#d6336c','#f59f00','#37b24d','#1c7ed6','#7048e8','#0ca678','#e8590c','#868e96'];
 // أيقونة لكل تصنيف، نفس أيقونات ملخص الساعة 10. وتصنيف ليه لون ثابت، والباقي بياخد لون من القايمة بالترتيب.
 const ICON = { 'أكل':'🍔', 'إلكترونيات':'🖥️', 'اشتراكات':'📱', 'رسوم وعمولات':'🏦', 'بيت وفواتير':'🏠', 'عربية وبنزين':'🚗',
@@ -179,7 +192,7 @@ function donut(cats, total) {
 // الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
-let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [];
+let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [];
 const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 const curMonth = () => dubaiToday().slice(0, 7);
 function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; }
@@ -286,6 +299,11 @@ function renderTx(d) {
   if (S.mode === 'cal') return app.innerHTML = h + calendar(d, all);
   h += `<div class="card">` + (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
     day.items.map((it) => itemRow(it, `${SRC[it.source] || ''} · ${esc(it.time)}`)).join('') + `</div>`).join('') + `</div>`;
+  // اللي اتلغى من اللوحة في الفترة دي: باهت ومشطوب، وبرّه كل الأرقام، ودوسة عليه بتفتح زرار «رجّع».
+  const cx = cancelled.filter((c) => c.day >= d.from && c.day <= d.to);
+  cx.forEach((c) => { byId[c.id] = { ...c, cancelled: true }; });
+  if (cx.length) h += `<div class="card"><div class="day"><h3><span>❌ اتلغت من اللوحة</span><span>${cx.length}</span></h3>` +
+    cx.map((c) => itemRow(c, `${dayName(c.day)} · ${esc(c.time)}`).replace('class="item tap"', 'class="item tap cx"')).join('') + `</div></div>`;
   app.innerHTML = h;
 }
 function calendar(d, all) {
@@ -391,7 +409,40 @@ function openItem(id) {
     kv('المبلغ', `<span class="ltr">${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</span> درهم`) +
     kv('التاريخ', `${dayName(it.day)} ${it.day.slice(0, 4)} · <span class="ltr">${esc(it.time)}</span>`) +
     kv('المصدر', SRC[it.source] || esc(it.source)) +
-    kv('الملاحظة', esc(it.note || '—')));
+    kv('الملاحظة', esc(it.note || '—')) + itemActions(it));
+}
+// موجة ٣: التعديل لحد ما الحركة تنزل «💸 سجل الفلوس»، وبعدها الملف هو المالك والتصليح برسالة لكلود.
+function itemActions(it) {
+  if (it.cancelled) return it.locked
+    ? `<div class="lock">🔒 الحركة دي اتلغت، ونزلت في «💸 سجل الفلوس» بعلامة ❌.</div>`
+    : `<div class="lock">❌ الحركة دي اتلغت من اللوحة، ومش محسوبة في أي رقم.</div><div class="acts"><button data-act="restore" data-v="${it.id}">↩️ رجّع الحركة</button></div>`;
+  if (it.status === 'synced_to_file') return `<div class="lock">🔒 الحركة دي نزلت في «💸 سجل الفلوس»، فالملف بقى هو المالك. ولو عايز تصلّح حاجة، ابعت لكلود.</div>`;
+  return `<div class="acts">` + (it.kind === 'income' ? '' : `<button data-act="pickcat" data-v="${it.id}">🏷️ غيّر التصنيف</button>`) +
+    `<button class="warn" data-act="cancel1" data-v="${it.id}">❌ إلغاء الحركة</button></div>`;
+}
+function pickCategory(id) {
+  const it = byId[id]; if (!it) return;
+  const names = Object.keys(ICON).filter((c) => c !== 'دخل ATM');
+  openSheet(`<div class="shhd">🏷️<b>اختار التصنيف</b></div><div class="cats">` +
+    names.map((c) => `<button data-act="setcat" data-v="${it.id}" data-c="${esc(c)}" class="${c === it.category ? 'on' : ''}">${label(c)}</button>`).join('') + `</div>`);
+}
+const RESULT = { changed: '✅ اتعمل', same: '👌 مفيش تغيير', locked: '🔒 الحركة نزلت الملف خلاص، فالتصليح برسالة لكلود', missing: '⚠️ الحركة مش موجودة', bad: '⚠️ التصنيف ده ما ينفعش هنا' };
+async function doWrite(body) {
+  sheet.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+  let msg;
+  try {
+    const r = await fetch(WRITE, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, ...body }) });
+    if (r.status === 401) throw new Error('مش قادر أتأكد إنه إنت. اقفل اللوحة وافتحها تاني من زرار البوت.');
+    if (!r.ok) throw new Error('في عطل في الاتصال. جرّب تاني.');
+    const res = (await r.json()).result;
+    msg = RESULT[res] || '⚠️ رد غريب من الباب';
+    if (res === 'changed') {
+      Object.keys(cache).forEach((k) => delete cache[k]);
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+    }
+  } catch (e) { msg = '⚠️ ' + e.message; }
+  openSheet(`<div class="toast">${esc(msg)}</div>`);
+  show();
 }
 function openDay(day) {
   const list = Object.values(byId).filter((i) => i.day === day).sort((a, b) => b.time.localeCompare(a.time));
@@ -460,6 +511,7 @@ async function getData(period) {
     if (Array.isArray(cache[period].months)) months = cache[period].months;
     if (cache[period].budget != null) budget = Number(cache[period].budget) || 0;
     if (Array.isArray(cache[period].cat_budgets)) catBudgets = cache[period].cat_budgets;
+    if (Array.isArray(cache[period].cancelled)) cancelled = cache[period].cancelled;
   }
   return cache[period];
 }
@@ -511,8 +563,17 @@ app.addEventListener('click', (e) => {
 sheet.addEventListener('click', (e) => {
   if (e.target === sheet) return closeSheet();
   const t = e.target.closest('[data-act]'); if (!t) return;
-  if (t.dataset.act === 'close') closeSheet();
-  else if (t.dataset.act === 'item') openItem(t.dataset.v);
+  const v = t.dataset.v;
+  switch (t.dataset.act) {
+    case 'close': return closeSheet();
+    case 'item': return openItem(v);
+    case 'pickcat': return pickCategory(v);
+    case 'setcat': return doWrite({ action: 'category', id: Number(v), category: t.dataset.c });
+    // الإلغاء بدوستين: الأولى بتقلب الزرار «اضغط تاني للتأكيد»، والتانية بتلغي.
+    case 'cancel1': t.dataset.act = 'cancel2'; t.className = 'sure'; t.textContent = 'اضغط تاني للتأكيد'; return;
+    case 'cancel2': return doWrite({ action: 'cancel', id: Number(v) });
+    case 'restore': return doWrite({ action: 'restore', id: Number(v) });
+  }
 });
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
 document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; closeSheet(); show(); }));
