@@ -133,14 +133,17 @@
   .toast { text-align:center; padding:14px 0 4px; font-size:15px; }
   .item.cx { opacity:.55; }
   .item.cx b { text-decoration:line-through; }
-  /* موجة ٤ (#60): حسابين زي التطبيق، والأرقام «••••» لحد ما مصطفى يدوس. */
-  .acc-top { text-align:center; padding:18px 14px; cursor:pointer; }
+  /* أقسام التقارير زي التطبيق: زرار بيفتح الكارت كله أو يقفله. */
+  .sec-h { display:flex; justify-content:space-between; align-items:center; width:100%; border:0; background:var(--card); color:var(--ink); border-radius:14px; padding:13px 14px; margin-bottom:12px; font:inherit; font-size:15px; font-weight:700; cursor:pointer; }
+  .sec-h i { font-style:normal; color:var(--muted); }
+  .sec-h.on i { color:var(--accent); }
+  /* موجة ٤ (#60): حسابين زي التطبيق، جوّه قسم «الحسابات» اللي بيبدأ مقفول. */
+  .acc-top { text-align:center; padding:18px 14px; }
   .acc-top span { color:var(--muted); font-size:13px; }
-  .acc-top b { display:block; font-size:30px; margin:6px 0; }
-  .acc-top small { color:var(--muted); font-size:12px; }
+  .acc-top b { display:block; font-size:30px; margin:6px 0 0; }
   .acc-h { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); padding-bottom:8px; border-bottom:1px solid var(--line); }
   .acc-h b { color:var(--ink); }
-  .acc { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .acc { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); }
   .acc:last-child { border-bottom:0; }
   .acc .ic { font-size:24px; flex:none; }
   .acc div { flex:1; min-width:0; }
@@ -155,7 +158,6 @@
   <div class="tabs">
     <button data-v="tx" class="on"><i>🧾</i>المعاملات</button>
     <button data-v="stats"><i>📊</i>الإحصائيات</button>
-    <button data-v="accounts"><i>🏦</i>الحسابات</button>
     <button data-v="reports"><i>📑</i>التقارير</button>
     <button data-v="commands"><i>📋</i>الأوامر</button>
   </div>
@@ -209,7 +211,9 @@ function donut(cats, total) {
 // الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
-let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [], accounts = null, showBal = false;
+let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [], accounts = null;
+// أقسام التقارير: الإحصائيات مفتوحة من الأول، والحسابات مقفولة لحد دوسة مصطفى (#60).
+const open = { stats: true, accounts: false };
 const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 const curMonth = () => dubaiToday().slice(0, 7);
 function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; }
@@ -399,11 +403,13 @@ function renderCat(d) {
       <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span></span><span class="ltr">${total ? Math.round(val(it) / total * 100) : 0}%</span></div></div>`).join('') + `</div>`;
 }
 
-// 📑 التقارير: الشهر ده في كارت، وتحته جدول كل الشهور. دوسة على شهر تفتح معاملاته.
+// 📑 التقارير زي التطبيق: «إحصائيات الشهر» و«الحسابات» زرارين، كل دوسة بتفتح الكارت كله أو تقفله
+// (طلب مصطفى 2026-10-30)، وتحتهم جدول كل الشهور. دوسة على شهر تفتح معاملاته.
 function renderReports(d) {
   const cur = curMonth(), m0 = months.find((m) => m.month === cur) || { expense: 0, income: 0 };
   const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
-  app.innerHTML = `<div class="daily" style="margin:0 0 8px">📅 إحصائيات ${monthName(cur)}</div>` + kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense), cur) + catBudgetsCard(d, cur) +
+  app.innerHTML = section('stats', `📅 إحصائيات ${monthName(cur)}`, () => kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense), cur) + catBudgetsCard(d, cur)) +
+    section('accounts', '🏦 الحسابات', () => accountsCard(d.accounts || accounts)) +
     `<div class="card"><div class="mrow th"><span>الشهر</span><span>نفقات</span><span>دخل</span><span>الفرق</span></div>` +
     years.map((y) => `<div class="yr">${y}</div>` + months.filter((m) => m.month.startsWith(y)).map((m) => {
       const diff = m.income - m.expense;
@@ -412,17 +418,21 @@ function renderReports(d) {
     (months.length <= 1 ? `<div class="note">الجدول بيكبر شهر بشهر.</div>` : '') + `</div>`;
 }
 
+// زرار القسم: مقفول بيبان سطر واحد، ومفتوح بيبان الكارت كله تحته.
+function section(key, title, body) {
+  const on = open[key];
+  return `<button class="sec-h${on ? ' on' : ''}" data-act="sec" data-v="${key}"><span>${title}</span><i>${on ? '▾' : '◂'}</i></button>` + (on ? body() : '');
+}
 // 🏦 الحسابات (موجة ٤، #60): الصافي فوق، وتحته الهلال من إيميل البنك و«حساب الأموال» = الصافي ناقص الهلال.
-// الأرقام «••••» لحد الدوسة، وبترجع تستخبى مع أي تبويب تاني، وما بتتحفظش في أي مكان.
-function renderAccounts(a) {
-  if (!a || a.net == null) return app.innerHTML = '<div class="msg">الحسابات لسه ما اتجهّزتش.</div>';
-  const m = (n) => (n == null ? '—' : showBal ? signed(n) : '••••');
-  app.innerHTML = `<div class="card acc-top" data-act="eye"><span>صافي القيمة</span><b class="ltr">${m(a.net)}</b>` +
-    `<small>${showBal ? '👁️ دوس تاني عشان تخبّي الأرقام' : '🙈 الأرقام مستخبية، دوس عشان تبان'}</small></div>` +
+// القسم بيبدأ مقفول، فالأرقام ما بتبانش غير بدوسة، وبيرجع يتقفل مع أي تبويب تاني، وما بيتحفظش في أي مكان.
+function accountsCard(a) {
+  if (!a || a.net == null) return '<div class="msg">الحسابات لسه ما اتجهّزتش.</div>';
+  const m = (n) => (n == null ? '—' : signed(n));
+  return `<div class="card acc-top"><span>صافي القيمة</span><b class="ltr">${m(a.net)}</b></div>` +
     `<div class="card"><div class="acc-h"><span>حساباتي</span><b class="ltr">${m(a.net)}</b></div>` +
-    `<div class="acc" data-act="eye"><span class="ic">🏦</span><div><b>بنك الهلال</b><small>من إيميل البنك · <span class="ltr">${esc(a.hilal_at || '—')}</span></small></div><b class="ltr">${m(a.hilal)}</b></div>` +
-    `<div class="acc" data-act="eye"><span class="ic">💰</span><div><b>حساب الأموال</b><small>كل فلوسك برّه الهلال</small></div><b class="ltr">${m(a.amwal)}</b></div></div>` +
-    `<div class="note">الصافي بدأ من قياس يوم <span class="ltr">${esc(a.as_of)}</span>، وبيتحرك لوحده مع كل دخل وصرف في اللوحة.</div>`;
+    `<div class="acc"><span class="ic">🏦</span><div><b>بنك الهلال</b><small>من إيميل البنك · <span class="ltr">${esc(a.hilal_at || '—')}</span></small></div><b class="ltr">${m(a.hilal)}</b></div>` +
+    `<div class="acc"><span class="ic">💰</span><div><b>حساب الأموال</b><small>كل فلوسك برّه الهلال</small></div><b class="ltr">${m(a.amwal)}</b></div></div>` +
+    `<div class="note" style="margin:-4px 0 12px">الصافي بدأ من قياس يوم <span class="ltr">${esc(a.as_of)}</span>، وبيتحرك لوحده مع كل دخل وصرف في اللوحة.</div>`;
 }
 
 // شباك التفاصيل: حركة واحدة، أو كل حركات يوم من التقويم.
@@ -558,11 +568,10 @@ async function show() {
       if (my === seq) renderCommands(d.commands || []);
       return;
     }
-    const d = await getData(S.view === 'reports' || S.view === 'accounts' ? 'month' : S.period);
+    const d = await getData(S.view === 'reports' ? 'month' : S.period);
     if (my !== seq) return;
     byId = {};
-    if (S.view === 'accounts') renderAccounts(d.accounts);
-    else if (S.view === 'reports') renderReports(d);
+    if (S.view === 'reports') renderReports(d);
     else if (S.view === 'stats') S.cat ? renderCat(d) : renderStats(d);
     else renderTx(d);
   } catch (e) {
@@ -582,10 +591,10 @@ app.addEventListener('click', (e) => {
     // من كارت ميزانية تصنيف في التقارير: صفحة التصنيف نفسها في الإحصائيات، على الشهر ده.
     case 'bcat': S.view = 'stats'; S.kind = 'expense'; S.period = 'month'; S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
     case 'back': return goBack();
-    case 'eye':
-      showBal = !showBal;
+    case 'sec':
+      open[v] = !open[v];
       if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-      return renderAccounts(accounts);
+      return cache.month ? renderReports(cache.month) : show();
     case 'item': return openItem(v);
     case 'day': return openDay(v);
     case 'page': return app.querySelector('.pager').children[Number(v)].scrollIntoView({ inline: 'start', block: 'nearest', behavior: 'smooth' });
@@ -612,9 +621,9 @@ sheet.addEventListener('click', (e) => {
   }
 });
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
-document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; showBal = false; closeSheet(); show(); }));
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; open.accounts = false; closeSheet(); show(); }));
 const startTab = new URLSearchParams(location.search).get('tab');
-if (['tx', 'stats', 'accounts', 'reports', 'commands'].includes(startTab)) S.view = startTab;
+if (['tx', 'stats', 'reports', 'commands'].includes(startTab)) S.view = startTab;
 show();
 </script>
 </body>
