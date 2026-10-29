@@ -13,7 +13,9 @@
   header { background:var(--accent); color:#fff; padding:16px 16px 12px; }
   header h1 { margin:0 0 10px; font-size:18px; }
   .tabs { display:flex; gap:6px; }
-  .tabs button { flex:1; border:0; border-radius:10px; padding:8px 2px; background:rgba(255,255,255,.2); color:#fff; font-size:13px; }
+  .tabs button { flex:1; min-width:0; border:0; border-radius:10px; padding:6px 2px; background:rgba(255,255,255,.2); color:#fff; font-size:12px; white-space:nowrap; }
+  /* 5 تبويبات من موجة ٤: الأيقونة فوق والاسم تحتها، زي شريط التطبيق. */
+  .tabs button i { display:block; font-style:normal; font-size:17px; line-height:1.3; }
   .tabs button.on { background:#fff; color:var(--accent); font-weight:700; }
   main { padding:12px 16px 32px; }
   .card { background:var(--card); border-radius:16px; padding:14px; margin-bottom:12px; }
@@ -131,16 +133,31 @@
   .toast { text-align:center; padding:14px 0 4px; font-size:15px; }
   .item.cx { opacity:.55; }
   .item.cx b { text-decoration:line-through; }
+  /* موجة ٤ (#60): حسابين زي التطبيق، والأرقام «••••» لحد ما مصطفى يدوس. */
+  .acc-top { text-align:center; padding:18px 14px; cursor:pointer; }
+  .acc-top span { color:var(--muted); font-size:13px; }
+  .acc-top b { display:block; font-size:30px; margin:6px 0; }
+  .acc-top small { color:var(--muted); font-size:12px; }
+  .acc-h { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); padding-bottom:8px; border-bottom:1px solid var(--line); }
+  .acc-h b { color:var(--ink); }
+  .acc { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); cursor:pointer; }
+  .acc:last-child { border-bottom:0; }
+  .acc .ic { font-size:24px; flex:none; }
+  .acc div { flex:1; min-width:0; }
+  .acc div b { display:block; font-size:15px; }
+  .acc small { color:var(--muted); font-size:12px; }
+  .acc > b { font-size:16px; }
 </style>
 </head>
 <body>
 <header>
   <h1>💸 لوحة الفلوس</h1>
   <div class="tabs">
-    <button data-v="tx" class="on">🧾 المعاملات</button>
-    <button data-v="stats">📊 الإحصائيات</button>
-    <button data-v="reports">📑 التقارير</button>
-    <button data-v="commands">📋 الأوامر</button>
+    <button data-v="tx" class="on"><i>🧾</i>المعاملات</button>
+    <button data-v="stats"><i>📊</i>الإحصائيات</button>
+    <button data-v="accounts"><i>🏦</i>الحسابات</button>
+    <button data-v="reports"><i>📑</i>التقارير</button>
+    <button data-v="commands"><i>📋</i>الأوامر</button>
   </div>
 </header>
 <main id="app"><div class="msg">بيحمّل…</div></main>
@@ -192,7 +209,7 @@ function donut(cats, total) {
 // الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
-let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [];
+let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [], accounts = null, showBal = false;
 const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 const curMonth = () => dubaiToday().slice(0, 7);
 function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; }
@@ -395,6 +412,19 @@ function renderReports(d) {
     (months.length <= 1 ? `<div class="note">الجدول بيكبر شهر بشهر.</div>` : '') + `</div>`;
 }
 
+// 🏦 الحسابات (موجة ٤، #60): الصافي فوق، وتحته الهلال من إيميل البنك و«حساب الأموال» = الصافي ناقص الهلال.
+// الأرقام «••••» لحد الدوسة، وبترجع تستخبى مع أي تبويب تاني، وما بتتحفظش في أي مكان.
+function renderAccounts(a) {
+  if (!a || a.net == null) return app.innerHTML = '<div class="msg">الحسابات لسه ما اتجهّزتش.</div>';
+  const m = (n) => (n == null ? '—' : showBal ? signed(n) : '••••');
+  app.innerHTML = `<div class="card acc-top" data-act="eye"><span>صافي القيمة</span><b class="ltr">${m(a.net)}</b>` +
+    `<small>${showBal ? '👁️ دوس تاني عشان تخبّي الأرقام' : '🙈 الأرقام مستخبية، دوس عشان تبان'}</small></div>` +
+    `<div class="card"><div class="acc-h"><span>حساباتي</span><b class="ltr">${m(a.net)}</b></div>` +
+    `<div class="acc" data-act="eye"><span class="ic">🏦</span><div><b>بنك الهلال</b><small>من إيميل البنك · <span class="ltr">${esc(a.hilal_at || '—')}</span></small></div><b class="ltr">${m(a.hilal)}</b></div>` +
+    `<div class="acc" data-act="eye"><span class="ic">💰</span><div><b>حساب الأموال</b><small>كل فلوسك برّه الهلال</small></div><b class="ltr">${m(a.amwal)}</b></div></div>` +
+    `<div class="note">الصافي بدأ من قياس يوم <span class="ltr">${esc(a.as_of)}</span>، وبيتحرك لوحده مع كل دخل وصرف في اللوحة.</div>`;
+}
+
 // شباك التفاصيل: حركة واحدة، أو كل حركات يوم من التقويم.
 function openSheet(html) {
   sheet.innerHTML = `<div class="sh">${html}<button class="close" data-act="close">قفل</button></div>`;
@@ -414,9 +444,9 @@ function openItem(id) {
 // موجة ٣: التعديل لحد ما الحركة تنزل «💸 سجل الفلوس»، وبعدها الملف هو المالك والتصليح برسالة لكلود.
 function itemActions(it) {
   if (it.cancelled) return it.locked
-    ? `<div class="lock">🔒 الحركة دي اتلغت، ونزلت في «💸 سجل الفلوس» بعلامة ❌.</div>`
+    ? `<div class="lock">🔒 الحركة دي اتلغت، ونزلت في 💸 «سجل الفلوس» بعلامة ❌.</div>`
     : `<div class="lock">❌ الحركة دي اتلغت من اللوحة، ومش محسوبة في أي رقم.</div><div class="acts"><button data-act="restore" data-v="${it.id}">↩️ رجّع الحركة</button></div>`;
-  if (it.status === 'synced_to_file') return `<div class="lock">🔒 الحركة دي نزلت في «💸 سجل الفلوس»، فالملف بقى هو المالك. ولو عايز تصلّح حاجة، ابعت لكلود.</div>`;
+  if (it.status === 'synced_to_file') return `<div class="lock">🔒 الحركة دي نزلت في 💸 «سجل الفلوس»، فالملف بقى هو المالك. ولو عايز تصلّح حاجة، ابعت لكلود.</div>`;
   return `<div class="acts">` + (it.kind === 'income' ? '' : `<button data-act="pickcat" data-v="${it.id}">🏷️ غيّر التصنيف</button>`) +
     `<button class="warn" data-act="cancel1" data-v="${it.id}">❌ إلغاء الحركة</button></div>`;
 }
@@ -512,6 +542,7 @@ async function getData(period) {
     if (cache[period].budget != null) budget = Number(cache[period].budget) || 0;
     if (Array.isArray(cache[period].cat_budgets)) catBudgets = cache[period].cat_budgets;
     if (Array.isArray(cache[period].cancelled)) cancelled = cache[period].cancelled;
+    if (cache[period].accounts) accounts = cache[period].accounts;
   }
   return cache[period];
 }
@@ -527,10 +558,11 @@ async function show() {
       if (my === seq) renderCommands(d.commands || []);
       return;
     }
-    const d = await getData(S.view === 'reports' ? 'month' : S.period);
+    const d = await getData(S.view === 'reports' || S.view === 'accounts' ? 'month' : S.period);
     if (my !== seq) return;
     byId = {};
-    if (S.view === 'reports') renderReports(d);
+    if (S.view === 'accounts') renderAccounts(d.accounts);
+    else if (S.view === 'reports') renderReports(d);
     else if (S.view === 'stats') S.cat ? renderCat(d) : renderStats(d);
     else renderTx(d);
   } catch (e) {
@@ -550,6 +582,10 @@ app.addEventListener('click', (e) => {
     // من كارت ميزانية تصنيف في التقارير: صفحة التصنيف نفسها في الإحصائيات، على الشهر ده.
     case 'bcat': S.view = 'stats'; S.kind = 'expense'; S.period = 'month'; S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
     case 'back': return goBack();
+    case 'eye':
+      showBal = !showBal;
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+      return renderAccounts(accounts);
     case 'item': return openItem(v);
     case 'day': return openDay(v);
     case 'page': return app.querySelector('.pager').children[Number(v)].scrollIntoView({ inline: 'start', block: 'nearest', behavior: 'smooth' });
@@ -576,9 +612,9 @@ sheet.addEventListener('click', (e) => {
   }
 });
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
-document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; closeSheet(); show(); }));
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; showBal = false; closeSheet(); show(); }));
 const startTab = new URLSearchParams(location.search).get('tab');
-if (['tx', 'stats', 'reports', 'commands'].includes(startTab)) S.view = startTab;
+if (['tx', 'stats', 'accounts', 'reports', 'commands'].includes(startTab)) S.view = startTab;
 show();
 </script>
 </body>
