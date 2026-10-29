@@ -6,14 +6,14 @@
 <title>لوحة الفلوس</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root { --bg:#f6f4f8; --card:#fff; --ink:#1d1b20; --muted:#6b6670; --accent:#d6336c; --line:#ece8ef; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#151316; --card:#211e23; --ink:#f2eff4; --muted:#a59fa9; --line:#2f2b31; } }
+  :root { --bg:#f6f4f8; --card:#fff; --ink:#1d1b20; --muted:#6b6670; --accent:#d6336c; --line:#ece8ef; --red:#e03131; --green:#2f9e44; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#151316; --card:#211e23; --ink:#f2eff4; --muted:#a59fa9; --line:#2f2b31; --red:#ff6b6b; --green:#51cf66; } }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font-family:system-ui,"Segoe UI",Tahoma,sans-serif; }
   header { background:var(--accent); color:#fff; padding:16px 16px 12px; }
   header h1 { margin:0 0 10px; font-size:18px; }
   .tabs { display:flex; gap:6px; }
-  .tabs button { flex:1; border:0; border-radius:10px; padding:8px 4px; background:rgba(255,255,255,.2); color:#fff; font-size:14px; }
+  .tabs button { flex:1; border:0; border-radius:10px; padding:8px 2px; background:rgba(255,255,255,.2); color:#fff; font-size:13px; }
   .tabs button.on { background:#fff; color:var(--accent); font-weight:700; }
   main { padding:12px 16px 32px; }
   .card { background:var(--card); border-radius:16px; padding:14px; margin-bottom:12px; }
@@ -37,6 +37,56 @@
   .item { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
   .item small { color:var(--muted); display:block; }
   .msg { text-align:center; color:var(--muted); padding:40px 0; }
+  .tap { cursor:pointer; }
+  /* شريط الفترات والزراير المقسومة، زي التطبيق في فيديو مصطفى (موجة ١، 2026-10-29). */
+  .chips { display:flex; gap:6px; overflow-x:auto; margin:0 -16px 12px; padding:0 16px; scrollbar-width:none; }
+  .chips::-webkit-scrollbar { display:none; }
+  .chips button { flex:none; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:6px 14px; font-size:13px; }
+  .chips button.on { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .seg { display:flex; background:var(--line); border-radius:10px; padding:3px; margin-bottom:12px; }
+  .seg button { flex:1; border:0; background:none; color:var(--muted); padding:7px; border-radius:8px; font-size:14px; }
+  .seg button.on { background:var(--card); color:var(--ink); font-weight:700; }
+  /* التقويم: كل يوم بلون صرفه أو دخله، وأول عمود من اليمين الأحد. */
+  .cal { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal .hd { text-align:center; font-size:11px; color:var(--muted); padding-bottom:4px; }
+  .cd { min-height:52px; border-radius:8px; padding:4px 2px; text-align:center; font-size:12px; background:var(--bg); }
+  .cd b { display:block; font-size:13px; }
+  .cd small { display:block; font-size:10px; direction:ltr; }
+  .cd.out { background:color-mix(in srgb, var(--red) 16%, transparent); color:var(--red); }
+  .cd.in { background:color-mix(in srgb, var(--green) 16%, transparent); color:var(--green); }
+  .cd .g { color:var(--green); }
+  .cd.off { opacity:.35; }
+  .cd.blank { background:none; }
+  .note { text-align:center; color:var(--muted); font-size:13px; margin-top:10px; }
+  .note b { color:var(--ink); direction:ltr; unicode-bidi:isolate; }
+  /* الدايرة بتتسحب 3 صفحات، والنقط تحتها بتقول إنت فين. */
+  .pager { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+  .pager::-webkit-scrollbar { display:none; }
+  .page { flex:0 0 100%; scroll-snap-align:start; min-height:150px; }
+  .dots { display:flex; justify-content:center; gap:6px; margin-top:8px; }
+  .dots i { width:7px; height:7px; border-radius:50%; background:var(--line); }
+  .dots i.on { background:var(--muted); }
+  svg.line { width:100%; height:130px; display:block; }
+  .sum { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); margin-top:6px; }
+  .sum b { color:var(--ink); direction:ltr; unicode-bidi:isolate; }
+  .back { display:flex; align-items:center; gap:10px; font-size:17px; font-weight:700; margin-bottom:12px; }
+  .back span { font-size:20px; }
+  .mrow { display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr; gap:6px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .mrow b { text-align:left; direction:ltr; unicode-bidi:isolate; font-weight:600; }
+  .mrow.th { color:var(--muted); font-size:12px; }
+  .mrow.th span:not(:first-child) { text-align:left; }
+  .yr { color:var(--muted); font-size:12px; margin-top:12px; }
+  .neg { color:var(--red); } .pos { color:var(--green); }
+  /* شباك التفاصيل من تحت: بيتفتح بدوسة على أي حركة أو يوم. */
+  .sheet { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:flex-end; z-index:5; }
+  .sheet.on { display:flex; }
+  .sh { background:var(--card); width:100%; border-radius:18px 18px 0 0; padding:18px 16px 24px; max-height:80vh; overflow:auto; }
+  .shhd { text-align:center; font-size:30px; margin-bottom:4px; }
+  .shhd b { display:block; font-size:17px; }
+  .kv { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .kv span { color:var(--muted); flex:none; }
+  .kv b { text-align:left; font-weight:600; }
+  .sh .close { width:100%; margin-top:14px; border:0; border-radius:12px; padding:11px; background:var(--accent); color:#fff; font-size:15px; }
   .stat { flex:1; text-align:center; border-radius:12px; padding:10px; background:var(--card); }
   .stat b { display:block; font-size:24px; color:var(--st); }
   .stat span { font-size:12px; color:var(--st); }
@@ -59,23 +109,30 @@
 <header>
   <h1>💸 لوحة الفلوس</h1>
   <div class="tabs">
-    <button data-p="week">الأسبوع</button>
-    <button data-p="month" class="on">الشهر ده</button>
-    <button data-p="last_month">الشهر اللي فات</button>
-    <button data-p="commands">📋 الأوامر</button>
+    <button data-v="tx" class="on">🧾 المعاملات</button>
+    <button data-v="stats">📊 الإحصائيات</button>
+    <button data-v="reports">📑 التقارير</button>
+    <button data-v="commands">📋 الأوامر</button>
   </div>
 </header>
 <main id="app"><div class="msg">بيحمّل…</div></main>
+<div id="sheet" class="sheet"></div>
 <script>
 const API = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-data';
 const COLORS = ['#d6336c','#f59f00','#37b24d','#1c7ed6','#7048e8','#0ca678','#e8590c','#868e96'];
-// تصنيف ليه لون وأيقونة ثابتين، والباقي بياخد لون من القايمة بالترتيب.
-const STYLE = { 'إلكترونيات': { color: '#9b8cf2', icon: '🖥️' } };
+// أيقونة لكل تصنيف، نفس أيقونات ملخص الساعة 10. وتصنيف ليه لون ثابت، والباقي بياخد لون من القايمة بالترتيب.
+const ICON = { 'أكل':'🍔', 'إلكترونيات':'🖥️', 'اشتراكات':'📱', 'رسوم وعمولات':'🏦', 'بيت وفواتير':'🏠', 'عربية وبنزين':'🚗',
+  'قسط الشقة':'🏢', 'أهل':'👨‍👩‍👧', 'شغل':'💼', 'صحة':'💊', 'ملابس':'👕', 'أخرى':'📦', 'دخل ATM':'💹' };
+const STYLE = { 'إلكترونيات': { color: '#9b8cf2' } };
 const color = (c, i) => (STYLE[c] && STYLE[c].color) || COLORS[i % COLORS.length];
-const label = (c) => (STYLE[c] ? STYLE[c].icon + ' ' : '') + esc(c);
+const label = (c) => (ICON[c] ? ICON[c] + ' ' : '') + esc(c);
+const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const monthName = (ym) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+const dayName = (iso) => `${Number(iso.slice(8, 10))} ${MONTHS[Number(iso.slice(5, 7)) - 1]}`;
 const tg = window.Telegram && window.Telegram.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 const app = document.getElementById('app');
+const sheet = document.getElementById('sheet');
 const fmt = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
 // علامة سالب واحدة في اللوحة كلها: «−».
 const signed = (n) => (Number(n) < 0 ? '−' : '') + fmt(Math.abs(Number(n)));
@@ -88,7 +145,7 @@ function daily(l) {
 }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const SRC = { email_alhilal: '📧 الهلال', bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
-
+const KIND = { expense: 'نفقة', income: 'دخل', refund: 'مرتجع' };
 function donut(cats, total) {
   if (!total) return '';
   let a = 0, paths = '';
@@ -103,23 +160,191 @@ function donut(cats, total) {
   return `<svg viewBox="0 0 140 140">${paths}<text x="70" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor">${fmt(total)}</text></svg>`;
 }
 
-function render(d) {
-  const total = Number(d.total_expense), cats = d.by_category || [];
-  let h = `<div class="card kpis">
-    <div class="kpi"><b>${fmt(d.total_expense)}</b><span>نفقات (درهم)</span></div>
-    <div class="kpi"><b>${fmt(d.total_income)}</b><span>دخل (درهم)</span></div>
-    <div class="kpi"><b>${signed(d.total_income - d.total_expense)}</b><span>الفرق</span></div></div>` + daily(d.last_daily);
-  if (!cats.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
-  h += `<div class="card donut">${donut(cats, total)}<div class="legend">` +
-    cats.map((c, i) => `<div><span><i class="dot" style="background:${color(c.category, i)}"></i>${label(c.category)}</span><b>${total ? Math.round(c.total / total * 100) : 0}%</b></div>`).join('') +
-    `</div></div><div class="card">` +
-    cats.map((c, i) => `<div class="bar"><div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${color(c.category, i)}"></div></div></div>`).join('') +
-    `</div><div class="card">` +
-    (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
-      day.items.map((it) => `<div class="item"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${SRC[it.source] || ''} · ${esc(it.time)}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`).join('') +
-      `</div>`).join('') + `</div>`;
+// الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
+const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
+const cache = {};
+let months = [], byId = {}, seq = 0;
+const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
+const curMonth = () => dubaiToday().slice(0, 7);
+function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; }
+const val = (i) => (i.kind === 'refund' ? -Number(i.amount) : Number(i.amount));
+const isKind = (i) => (S.kind === 'income' ? i.kind === 'income' : i.kind !== 'income');
+function flat(d) {
+  const all = (d.days || []).flatMap((x) => x.items.map((it) => ({ ...it, day: x.day })));
+  all.forEach((it) => { byId[it.id] = it; });
+  return all;
+}
+function dates(from, to) {
+  const out = [];
+  for (let t = Date.parse(from + 'T00:00:00Z'); t <= Date.parse(to + 'T00:00:00Z'); t += 864e5) out.push(new Date(t).toISOString().slice(0, 10));
+  return out;
+}
+
+function chips() {
+  const cur = curMonth(), last = prevMonth(cur);
+  const list = [['week', 'آخر 7 أيام'], ['month', 'الشهر ده'], ['last_month', 'الشهر اللي فات']]
+    .concat(months.map((m) => m.month).filter((m) => m < last).map((m) => [m, monthName(m)]));
+  return `<div class="chips">${list.map(([p, t]) => `<button data-act="period" data-v="${p}" class="${S.period === p ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+}
+const seg = (act, opts, on) => `<div class="seg">${opts.map(([v, t]) => `<button data-act="${act}" data-v="${v}" class="${on === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+function kpis(x, i) {
+  return `<div class="card kpis">
+    <div class="kpi"><b>${fmt(x)}</b><span>نفقات (درهم)</span></div>
+    <div class="kpi"><b>${fmt(i)}</b><span>دخل (درهم)</span></div>
+    <div class="kpi"><b>${signed(i - x)}</b><span>الفرق</span></div></div>`;
+}
+const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
+
+// خط كل يوم: أول يوم على اليمين زي التطبيق، والنقطة الملوّنة يوم فيه حركة.
+function line(pts, col) {
+  const W = 300, H = 130, P = 12, n = pts.length, max = Math.max(1, ...pts.map((p) => p.v));
+  const x = (i) => (n < 2 ? W / 2 : W - P - i * (W - 2 * P) / (n - 1));
+  const y = (v) => H - 20 - (v / max) * (H - 38);
+  const poly = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' ');
+  const dotsSvg = pts.map((p, i) => p.v > 0
+    ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="3.5" fill="${col}"/>`
+    : `<circle cx="${x(i).toFixed(1)}" cy="${y(0).toFixed(1)}" r="1.6" fill="var(--muted)"/>`).join('');
+  const lab = (i) => `<text x="${x(i).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--muted)">${Number(pts[i].day.slice(8, 10))}</text>`;
+  return `<svg class="line" viewBox="0 0 ${W} ${H}">
+    <line x1="${P}" x2="${W - P}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>
+    <polyline points="${poly}" fill="none" stroke="${col}" stroke-width="1.5" opacity=".55"/>${dotsSvg}
+    ${lab(0)}${n > 2 ? lab(Math.floor((n - 1) / 2)) : ''}${n > 1 ? lab(n - 1) : ''}
+    <text x="${P}" y="12" font-size="10" fill="var(--muted)">${fmt(max)}</text></svg>`;
+}
+function series(d, pred) {
+  const m = {};
+  flat(d).filter(pred).forEach((i) => { m[i.day] = (m[i.day] || 0) + val(i); });
+  return dates(d.from, d.to).map((day) => ({ day, v: m[day] || 0 }));
+}
+const sumAvg = (pts) => {
+  const t = pts.reduce((a, p) => a + p.v, 0);
+  return `<div class="sum"><span>المجموع: <b>${fmt(t)}</b></span><span>المعدل في اليوم: <b>${fmt(pts.length ? t / pts.length : 0)}</b></span></div>`;
+};
+
+// 🧾 المعاملات: الأرقام التلاتة، وبعدها قايمة بالأيام أو تقويم الشهر.
+function renderTx(d) {
+  const all = flat(d);
+  let h = chips() + kpis(d.total_expense, d.total_income) + daily(d.last_daily) + seg('mode', [['list', '📃 قايمة'], ['cal', '📅 تقويم']], S.mode);
+  if (!all.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
+  if (S.mode === 'cal') return app.innerHTML = h + calendar(d, all);
+  h += `<div class="card">` + (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
+    day.items.map((it) => itemRow(it, `${SRC[it.source] || ''} · ${esc(it.time)}`)).join('') + `</div>`).join('') + `</div>`;
   app.innerHTML = h;
+}
+function calendar(d, all) {
+  const spend = {}, inc = {};
+  all.forEach((i) => { if (i.kind === 'income') inc[i.day] = (inc[i.day] || 0) + Number(i.amount); else spend[i.day] = (spend[i.day] || 0) + val(i); });
+  const week = S.period === 'week';
+  const first = week ? d.from : d.from.slice(0, 8) + '01';
+  const y = Number(d.from.slice(0, 4)), m = Number(d.from.slice(5, 7));
+  const last = week ? d.to : new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+  const pad = new Date(first + 'T00:00:00Z').getUTCDay();
+  const heads = ['أحد', 'اتنين', 'تلات', 'أربع', 'خميس', 'جمعة', 'سبت'].map((t) => `<div class="hd">${t}</div>`).join('');
+  const cells = '<div class="cd blank"></div>'.repeat(pad) + dates(first, last).map((day) => {
+    const s = spend[day] || 0, n = inc[day] || 0, inside = day >= d.from && day <= d.to;
+    const cls = s > 0 ? 'out' : n > 0 ? 'in' : '';
+    return `<div class="cd ${cls}${inside ? '' : ' off'}${s || n ? ' tap' : ''}" ${s || n ? `data-act="day" data-v="${day}"` : ''}><b>${Number(day.slice(8, 10))}</b>` +
+      (s ? `<small>${fmt(s)}</small>` : '') + (n ? `<small class="g">+${fmt(n)}</small>` : '') + `</div>`;
+  }).join('');
+  const days = dates(d.from, d.to).length;
+  return `<div class="card"><div class="cal">${heads}${cells}</div>
+    <div class="note">متوسط الصرف في اليوم: <b>${fmt(d.total_expense / days)}</b> درهم</div>
+    <div class="note"><i class="dot" style="background:var(--red)"></i>يوم فيه صرف &nbsp; <i class="dot" style="background:var(--green)"></i>يوم فيه دخل بس</div></div>`;
+}
+
+// 📊 الإحصائيات: نفقات ولا دخل، والدايرة 3 صفحات، وكل تصنيف بيفتح صفحته.
+function catsOf(d) {
+  if (S.kind === 'expense') return d.by_category || [];
+  const g = {};
+  flat(d).filter((i) => i.kind === 'income').forEach((i) => { g[i.category] = g[i.category] || { category: i.category, total: 0, count: 0 }; g[i.category].total += Number(i.amount); g[i.category].count++; });
+  return Object.values(g).sort((a, b) => b.total - a.total);
+}
+function renderStats(d) {
+  const cats = catsOf(d), total = cats.reduce((a, c) => a + Number(c.total), 0);
+  let h = chips() + seg('kind', [['expense', '💸 نفقات'], ['income', '💰 دخل']], S.kind);
+  if (!cats.length) return app.innerHTML = h + `<div class="msg">مفيش ${S.kind === 'income' ? 'دخل' : 'نفقات'} في الفترة دي.</div>`;
+  const perDay = {};
+  flat(d).filter(isKind).forEach((i) => { perDay[i.day] = (perDay[i.day] || 0) + val(i); });
+  const top = Object.entries(perDay).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const topCats = top.slice(0, 5).map(([day, v]) => ({ category: day, total: v }));
+  const rest = top.slice(5).reduce((a, [, v]) => a + v, 0);
+  if (rest > 0) topCats.push({ category: 'أخرى', total: rest });
+  const col = S.kind === 'income' ? '#2f9e44' : '#d6336c';
+  const pts = series(d, isKind);
+  h += `<div class="card"><div class="pager">
+    <div class="page donut">${donut(cats, total)}<div class="legend">` +
+      cats.map((c, i) => `<div><span><i class="dot" style="background:${color(c.category, i)}"></i>${label(c.category)}</span><b>${Math.round(c.total / total * 100)}%</b></div>`).join('') + `</div></div>
+    <div class="page donut">${donut(topCats, total)}<div class="legend"><div><small style="color:var(--muted)">أكبر الأيام</small></div>` +
+      topCats.map((c, i) => `<div><span><i class="dot" style="background:${color(c.category, i)}"></i>${c.category === 'أخرى' ? 'أيام تانية' : dayName(c.category)}</span><b>${fmt(c.total)}</b></div>`).join('') + `</div></div>
+    <div class="page">${line(pts, col)}${sumAvg(pts)}</div>
+  </div><div class="dots">${[0, 1, 2].map((i) => `<i data-act="page" data-v="${i}" class="tap${S.page === i ? ' on' : ''}"></i>`).join('')}</div></div>`;
+  h += `<div class="card">` + cats.map((c, i) => `<div class="bar tap" data-act="cat" data-v="${esc(c.category)}" data-c="${color(c.category, i)}">
+      <div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
+      <div class="track"><div class="fill" style="width:${Math.max(2, c.total / total * 100)}%;background:${color(c.category, i)}"></div></div></div>`).join('') + `</div>`;
+  app.innerHTML = h;
+  const pager = app.querySelector('.pager');
+  if (S.page) pager.children[S.page].scrollIntoView({ inline: 'start', block: 'nearest' });
+  pager.addEventListener('scroll', () => {
+    const p = Math.round(Math.abs(pager.scrollLeft) / pager.clientWidth);
+    if (p === S.page) return;
+    S.page = p;
+    app.querySelectorAll('.dots i').forEach((el, i) => el.classList.toggle('on', i === p));
+  }, { passive: true });
+}
+function renderCat(d) {
+  const pred = (i) => isKind(i) && i.category === S.cat;
+  const items = flat(d).filter(pred), total = items.reduce((a, i) => a + val(i), 0);
+  const pts = series(d, pred);
+  const sorted = items.slice().sort(S.sort === 'amount' ? (a, b) => val(b) - val(a) : (a, b) => (b.day + b.time).localeCompare(a.day + a.time));
+  app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>
+    <div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
+    seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
+    `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
+      <div class="row"><span>${esc(it.note || it.category)}</span><b class="ltr">${fmt(it.amount)}</b></div>
+      <div class="track"><div class="fill" style="width:${total ? Math.max(2, val(it) / total * 100) : 0}%;background:${S.catColor}"></div></div>
+      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span></span><span class="ltr">${total ? Math.round(val(it) / total * 100) : 0}%</span></div></div>`).join('') + `</div>`;
+}
+
+// 📑 التقارير: الشهر ده في كارت، وتحته جدول كل الشهور. دوسة على شهر تفتح معاملاته.
+function renderReports() {
+  const cur = curMonth(), m0 = months.find((m) => m.month === cur) || { expense: 0, income: 0 };
+  const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
+  app.innerHTML = `<div class="daily" style="margin:0 0 8px">📅 إحصائيات ${monthName(cur)}</div>` + kpis(m0.expense, m0.income) +
+    `<div class="card"><div class="mrow th"><span>الشهر</span><span>نفقات</span><span>دخل</span><span>الفرق</span></div>` +
+    years.map((y) => `<div class="yr">${y}</div>` + months.filter((m) => m.month.startsWith(y)).map((m) => {
+      const diff = m.income - m.expense;
+      return `<div class="mrow tap" data-act="month" data-v="${m.month}"><span>${MONTHS[Number(m.month.slice(5, 7)) - 1]}</span><b>${fmt(m.expense)}</b><b>${fmt(m.income)}</b><b class="${diff < 0 ? 'neg' : 'pos'}">${signed(diff)}</b></div>`;
+    }).join('')).join('') +
+    (months.length <= 1 ? `<div class="note">الجدول بيكبر شهر بشهر.</div>` : '') + `</div>`;
+}
+
+// شباك التفاصيل: حركة واحدة، أو كل حركات يوم من التقويم.
+function openSheet(html) {
+  sheet.innerHTML = `<div class="sh">${html}<button class="close" data-act="close">قفل</button></div>`;
+  sheet.classList.add('on'); backBtn();
+}
+function closeSheet() { sheet.classList.remove('on'); sheet.innerHTML = ''; backBtn(); }
+function openItem(id) {
+  const it = byId[id]; if (!it) return;
+  const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+  openSheet(`<div class="shhd">${ICON[it.category] || '▫️'}<b>${esc(it.category)}</b></div>` +
+    kv('النوع', KIND[it.kind] || esc(it.kind)) +
+    kv('المبلغ', `<span class="ltr">${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</span> درهم`) +
+    kv('التاريخ', `${dayName(it.day)} ${it.day.slice(0, 4)} · <span class="ltr">${esc(it.time)}</span>`) +
+    kv('المصدر', SRC[it.source] || esc(it.source)) +
+    kv('الملاحظة', esc(it.note || '—')));
+}
+function openDay(day) {
+  const list = Object.values(byId).filter((i) => i.day === day).sort((a, b) => b.time.localeCompare(a.time));
+  openSheet(`<div class="shhd">📅<b>${dayName(day)}</b></div>` + list.map((it) => itemRow(it, `<span class="ltr">${esc(it.time)}</span>`)).join(''));
+}
+function backBtn() {
+  if (!tg || !tg.BackButton) return;
+  sheet.classList.contains('on') || S.cat ? tg.BackButton.show() : tg.BackButton.hide();
+}
+function goBack() {
+  if (sheet.classList.contains('on')) return closeSheet();
+  if (S.cat) { S.cat = null; show(); }
 }
 
 // تبويب «الأوامر»: نظرة سريعة. كارت مقفول فيه الحالة والعنوان والنتيجة و«👣 الجاي»،
@@ -165,21 +390,72 @@ function renderCommands(list) {
   }));
 }
 
-async function load(period) {
-  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.p === period));
-  if (!tg || !tg.initData) { app.innerHTML = '<div class="msg">افتح اللوحة من زرار البوت في تليجرام.</div>'; return; }
-  app.innerHTML = '<div class="msg">بيحمّل…</div>';
-  const commands = period === 'commands';
-  try {
-    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(commands ? { initData: tg.initData, view: 'commands' } : { initData: tg.initData, period }) });
-    if (!r.ok) { app.innerHTML = `<div class="msg">مش مسموح (${r.status}).</div>`; return; }
-    const d = await r.json();
-    commands ? renderCommands(d.commands || []) : render(d);
-  } catch { app.innerHTML = '<div class="msg">في عطل في الاتصال. جرّب تاني.</div>'; }
+async function post(body) {
+  const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, ...body }) });
+  if (!r.ok) throw new Error(`مش مسموح (${r.status}).`);
+  return r.json();
 }
-document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => load(b.dataset.p)));
-load(new URLSearchParams(location.search).get('tab') === 'commands' ? 'commands' : 'month');
+async function getData(period) {
+  if (!cache[period]) {
+    cache[period] = await post({ period });
+    if (Array.isArray(cache[period].months)) months = cache[period].months;
+  }
+  return cache[period];
+}
+async function show() {
+  document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.view));
+  backBtn();
+  if (!tg || !tg.initData) { app.innerHTML = '<div class="msg">افتح اللوحة من زرار البوت في تليجرام.</div>'; return; }
+  const my = ++seq;
+  app.innerHTML = '<div class="msg">بيحمّل…</div>';
+  try {
+    if (S.view === 'commands') {
+      const d = await post({ view: 'commands' });
+      if (my === seq) renderCommands(d.commands || []);
+      return;
+    }
+    const d = await getData(S.view === 'reports' ? 'month' : S.period);
+    if (my !== seq) return;
+    byId = {};
+    if (S.view === 'reports') renderReports();
+    else if (S.view === 'stats') S.cat ? renderCat(d) : renderStats(d);
+    else renderTx(d);
+  } catch (e) {
+    if (my === seq) app.innerHTML = `<div class="msg">${esc(e.message.startsWith('مش') ? e.message : 'في عطل في الاتصال. جرّب تاني.')}</div>`;
+  }
+}
+
+app.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const v = t.dataset.v;
+  switch (t.dataset.act) {
+    case 'period': S.period = v; S.cat = null; return show();
+    case 'kind': S.kind = v; S.cat = null; return show();
+    case 'mode': S.mode = v; return show();
+    case 'sort': S.sort = v; return show();
+    case 'cat': S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
+    case 'back': return goBack();
+    case 'item': return openItem(v);
+    case 'day': return openDay(v);
+    case 'page': return app.querySelector('.pager').children[Number(v)].scrollIntoView({ inline: 'start', block: 'nearest', behavior: 'smooth' });
+    case 'month': {
+      const cur = curMonth();
+      S.view = 'tx'; S.cat = null; S.period = v === cur ? 'month' : v === prevMonth(cur) ? 'last_month' : v;
+      return show();
+    }
+  }
+});
+sheet.addEventListener('click', (e) => {
+  if (e.target === sheet) return closeSheet();
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  if (t.dataset.act === 'close') closeSheet();
+  else if (t.dataset.act === 'item') openItem(t.dataset.v);
+});
+if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
+document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; closeSheet(); show(); }));
+const startTab = new URLSearchParams(location.search).get('tab');
+if (['tx', 'stats', 'reports', 'commands'].includes(startTab)) S.view = startTab;
+show();
 </script>
 </body>
 </html>
