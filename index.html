@@ -111,6 +111,14 @@
   .bud-t { margin:0 0 10px; font-size:15px; }
   .pace { font-size:13px; color:var(--muted); margin-top:10px; padding-top:10px; border-top:1px solid var(--line); text-align:center; }
   .pace b { color:var(--ink); direction:ltr; unicode-bidi:isolate; }
+  /* ميزانية كل تصنيف: كارت صغير لكل واحد، اتنين جنب بعض، ودوسة بتفتح صفحة التصنيف. */
+  .cbs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .cb { display:flex; align-items:center; gap:8px; background:var(--bg); border-radius:12px; padding:8px; min-width:0; }
+  .cb svg { width:58px; height:58px; flex:none; }
+  .cb div { min-width:0; }
+  .cb b { display:block; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cb small { display:block; font-size:11px; color:var(--muted); }
+  .cb small span { direction:ltr; unicode-bidi:isolate; }
 </style>
 </head>
 <body>
@@ -171,7 +179,7 @@ function donut(cats, total) {
 // الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
-let months = [], byId = {}, seq = 0, budget = 0;
+let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [];
 const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 const curMonth = () => dubaiToday().slice(0, 7);
 function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; }
@@ -203,24 +211,43 @@ function kpis(x, i) {
 }
 // 💰 كارت الميزانية: الرقم جاي من الباب مش من الصفحة، لأن الصفحة نفسها على GitHub مكشوفة.
 // الدايرة أخضر لو الصرف ماشي أبطأ من الشهر، وبرتقاني لو أسرع، وأحمر لو عدّى الميزانية.
-function budgetCard(spent, ym) {
-  if (!budget || !ym) return '';
-  const f = spent / budget, over = spent > budget, left = budget - spent;
+function budgetState(spent, amount, ym) {
   const days = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0)).getUTCDate();
-  const isCur = ym === curMonth(), today = isCur ? Number(dubaiToday().slice(8, 10)) : days, rest = days - today + 1;
+  const isCur = ym === curMonth(), today = isCur ? Number(dubaiToday().slice(8, 10)) : days;
+  const f = spent / amount, over = spent > amount;
   const col = over ? 'var(--red)' : f > today / days ? '#f08c00' : 'var(--green)';
-  const R = 46, C = 2 * Math.PI * R, t = (today / days) * 2 * Math.PI;
-  const tick = isCur ? `<line x1="${56 + 36 * Math.sin(t)}" y1="${56 - 36 * Math.cos(t)}" x2="${56 + 56 * Math.sin(t)}" y2="${56 - 56 * Math.cos(t)}" stroke="var(--ink)" stroke-width="2.5"/>` : '';
-  const svg = `<svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" stroke="var(--line)" stroke-width="11" fill="none"/>
-    <circle cx="56" cy="56" r="${R}" stroke="${col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.min(f, 1) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
-    <text x="56" y="58" text-anchor="middle" font-size="18" font-weight="700" fill="${col}">${Math.round(f * 100)}%</text>
-    <text x="56" y="75" text-anchor="middle" font-size="11" fill="var(--muted)">${over ? 'اتجاوزت' : 'اتصرف'}</text></svg>`;
+  return { f, over, left: amount - spent, col, isCur, today, days, rest: days - today + 1 };
+}
+function ring(st, sub) {
+  const R = 46, C = 2 * Math.PI * R, t = (st.today / st.days) * 2 * Math.PI;
+  const tick = st.isCur ? `<line x1="${56 + 36 * Math.sin(t)}" y1="${56 - 36 * Math.cos(t)}" x2="${56 + 56 * Math.sin(t)}" y2="${56 - 56 * Math.cos(t)}" stroke="var(--ink)" stroke-width="2.5"/>` : '';
+  return `<svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" stroke="var(--line)" stroke-width="11" fill="none"/>
+    <circle cx="56" cy="56" r="${R}" stroke="${st.col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.min(st.f, 1) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
+    <text x="56" y="${sub ? 58 : 63}" text-anchor="middle" font-size="${sub ? 18 : 24}" font-weight="700" fill="${st.col}">${Math.round(st.f * 100)}%</text>` +
+    (sub ? `<text x="56" y="75" text-anchor="middle" font-size="11" fill="var(--muted)">${st.over ? 'اتجاوزت' : 'اتصرف'}</text>` : '') + `</svg>`;
+}
+function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${ym && monthName(ym)}`) {
+  if (!amount || !ym) return '';
+  const st = budgetState(spent, amount, ym), left = st.left;
   const kv = (k, v, c) => `<div class="kv"><span>${k}</span><b class="${c || ''}">${v}</b></div>`;
-  const pace = over ? `⚠️ عدّيت الميزانية بـ <b>${fmt(-left)}</b> درهم`
-    : isCur ? `⏱️ فاضل <b>${rest}</b> يوم في الشهر · تقدر تصرف <b>${fmt(left / rest)}</b> في اليوم` : `✅ الشهر خلص وإنت جوّه الميزانية`;
-  return `<div class="card"><h4 class="bud-t">💰 ميزانية ${monthName(ym)}</h4><div class="bud">${svg}<div class="kvs">` +
-    kv('الميزانية', fmt(budget)) + kv('اتصرف', fmt(spent)) + kv(over ? 'اتجاوزت' : 'فاضل', signed(left), left < 0 ? 'neg' : 'pos') +
+  const pace = st.over ? `⚠️ عدّيت الميزانية بـ <b>${fmt(-left)}</b> درهم`
+    : st.isCur ? `⏱️ فاضل <b>${st.rest}</b> يوم في الشهر · تقدر تصرف <b>${fmt(left / st.rest)}</b> في اليوم` : `✅ الشهر خلص وإنت جوّه الميزانية`;
+  const svg = ring(st, true), over = st.over;
+  return `<div class="card"><h4 class="bud-t">${title}</h4><div class="bud">${svg}<div class="kvs">` +
+    kv('الميزانية', fmt(amount)) + kv('اتصرف', fmt(spent)) + kv(over ? 'اتجاوزت' : 'فاضل', signed(left), left < 0 ? 'neg' : 'pos') +
     `</div></div><div class="pace">${pace}</div></div>`;
+}
+// كروت ميزانية التصنيفات: الصرف من by_category بتاع نفس الشهر، وتصنيف ما اتصرفش فيه بيبان 0%.
+function catBudgetsCard(d, ym) {
+  if (!catBudgets.length || !ym) return '';
+  const spent = {}, idx = {};
+  (d.by_category || []).forEach((c, i) => { spent[c.category] = Number(c.total); idx[c.category] = i; });
+  return `<div class="card"><h4 class="bud-t">🗂️ ميزانية التصنيفات</h4><div class="cbs">` + catBudgets.map((b) => {
+    const s = spent[b.category] || 0, st = budgetState(s, Number(b.amount), ym);
+    return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, idx[b.category] ?? 0)}">${ring(st, false)}
+      <div><b>${label(b.category)}</b><small><span>${fmt(s)}</span> من <span>${fmt(b.amount)}</span></small>` +
+      `<small class="${st.over ? 'neg' : 'pos'}">${st.over ? 'اتجاوزت' : 'فاضل'} <span>${fmt(Math.abs(st.left))}</span></small></div></div>`;
+  }).join('') + `</div></div>`;
 }
 const periodMonth = () => (S.period === 'month' ? curMonth() : S.period === 'last_month' ? prevMonth(curMonth()) : /^\d{4}-\d{2}$/.test(S.period) ? S.period : '');
 const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
@@ -326,8 +353,10 @@ function renderCat(d) {
   const items = flat(d).filter(pred), total = items.reduce((a, i) => a + val(i), 0);
   const pts = series(d, pred);
   const sorted = items.slice().sort(S.sort === 'amount' ? (a, b) => val(b) - val(a) : (a, b) => (b.day + b.time).localeCompare(a.day + a.time));
-  app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>
-    <div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
+  const cb = S.kind === 'expense' && catBudgets.find((b) => b.category === S.cat);
+  app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>` +
+    (cb ? budgetCard(total, periodMonth(), Number(cb.amount), `💰 ميزانية ${label(S.cat)}`) : '') +
+    `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
     seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
     `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
       <div class="row"><span>${esc(it.note || it.category)}</span><b class="ltr">${fmt(it.amount)}</b></div>
@@ -336,10 +365,10 @@ function renderCat(d) {
 }
 
 // 📑 التقارير: الشهر ده في كارت، وتحته جدول كل الشهور. دوسة على شهر تفتح معاملاته.
-function renderReports() {
+function renderReports(d) {
   const cur = curMonth(), m0 = months.find((m) => m.month === cur) || { expense: 0, income: 0 };
   const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
-  app.innerHTML = `<div class="daily" style="margin:0 0 8px">📅 إحصائيات ${monthName(cur)}</div>` + kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense), cur) +
+  app.innerHTML = `<div class="daily" style="margin:0 0 8px">📅 إحصائيات ${monthName(cur)}</div>` + kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense), cur) + catBudgetsCard(d, cur) +
     `<div class="card"><div class="mrow th"><span>الشهر</span><span>نفقات</span><span>دخل</span><span>الفرق</span></div>` +
     years.map((y) => `<div class="yr">${y}</div>` + months.filter((m) => m.month.startsWith(y)).map((m) => {
       const diff = m.income - m.expense;
@@ -430,6 +459,7 @@ async function getData(period) {
     cache[period] = await post({ period });
     if (Array.isArray(cache[period].months)) months = cache[period].months;
     if (cache[period].budget != null) budget = Number(cache[period].budget) || 0;
+    if (Array.isArray(cache[period].cat_budgets)) catBudgets = cache[period].cat_budgets;
   }
   return cache[period];
 }
@@ -448,7 +478,7 @@ async function show() {
     const d = await getData(S.view === 'reports' ? 'month' : S.period);
     if (my !== seq) return;
     byId = {};
-    if (S.view === 'reports') renderReports();
+    if (S.view === 'reports') renderReports(d);
     else if (S.view === 'stats') S.cat ? renderCat(d) : renderStats(d);
     else renderTx(d);
   } catch (e) {
@@ -465,6 +495,8 @@ app.addEventListener('click', (e) => {
     case 'mode': S.mode = v; return show();
     case 'sort': S.sort = v; return show();
     case 'cat': S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
+    // من كارت ميزانية تصنيف في التقارير: صفحة التصنيف نفسها في الإحصائيات، على الشهر ده.
+    case 'bcat': S.view = 'stats'; S.kind = 'expense'; S.period = 'month'; S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
     case 'back': return goBack();
     case 'item': return openItem(v);
     case 'day': return openDay(v);
