@@ -103,6 +103,14 @@
   .done { --st:#2f9e44; } .waiting, .pulled { --st:#f08c00; }
   .stat { cursor:pointer; border:2px solid transparent; }
   .stat.on { border-color:var(--st); }
+  /* ميزانية الشهر (موجة ٢): دايرة زي التطبيق، وشرطة بتقول الشهر وصل لفين النهارده. */
+  .bud { display:flex; align-items:center; gap:14px; }
+  .bud svg { width:112px; height:112px; flex:none; }
+  .bud .kvs { flex:1; }
+  .bud .kv { padding:6px 0; }
+  .bud-t { margin:0 0 10px; font-size:15px; }
+  .pace { font-size:13px; color:var(--muted); margin-top:10px; padding-top:10px; border-top:1px solid var(--line); text-align:center; }
+  .pace b { color:var(--ink); direction:ltr; unicode-bidi:isolate; }
 </style>
 </head>
 <body>
@@ -163,7 +171,7 @@ function donut(cats, total) {
 // الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
-let months = [], byId = {}, seq = 0;
+let months = [], byId = {}, seq = 0, budget = 0;
 const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 const curMonth = () => dubaiToday().slice(0, 7);
 function prevMonth(ym) { const [y, m] = ym.split('-').map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`; }
@@ -193,6 +201,28 @@ function kpis(x, i) {
     <div class="kpi"><b>${fmt(i)}</b><span>دخل (درهم)</span></div>
     <div class="kpi"><b>${signed(i - x)}</b><span>الفرق</span></div></div>`;
 }
+// 💰 كارت الميزانية: الرقم جاي من الباب مش من الصفحة، لأن الصفحة نفسها على GitHub مكشوفة.
+// الدايرة أخضر لو الصرف ماشي أبطأ من الشهر، وبرتقاني لو أسرع، وأحمر لو عدّى الميزانية.
+function budgetCard(spent, ym) {
+  if (!budget || !ym) return '';
+  const f = spent / budget, over = spent > budget, left = budget - spent;
+  const days = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0)).getUTCDate();
+  const isCur = ym === curMonth(), today = isCur ? Number(dubaiToday().slice(8, 10)) : days, rest = days - today + 1;
+  const col = over ? 'var(--red)' : f > today / days ? '#f08c00' : 'var(--green)';
+  const R = 46, C = 2 * Math.PI * R, t = (today / days) * 2 * Math.PI;
+  const tick = isCur ? `<line x1="${56 + 36 * Math.sin(t)}" y1="${56 - 36 * Math.cos(t)}" x2="${56 + 56 * Math.sin(t)}" y2="${56 - 56 * Math.cos(t)}" stroke="var(--ink)" stroke-width="2.5"/>` : '';
+  const svg = `<svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" stroke="var(--line)" stroke-width="11" fill="none"/>
+    <circle cx="56" cy="56" r="${R}" stroke="${col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.min(f, 1) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
+    <text x="56" y="58" text-anchor="middle" font-size="18" font-weight="700" fill="${col}">${Math.round(f * 100)}%</text>
+    <text x="56" y="75" text-anchor="middle" font-size="11" fill="var(--muted)">${over ? 'اتجاوزت' : 'اتصرف'}</text></svg>`;
+  const kv = (k, v, c) => `<div class="kv"><span>${k}</span><b class="${c || ''}">${v}</b></div>`;
+  const pace = over ? `⚠️ عدّيت الميزانية بـ <b>${fmt(-left)}</b> درهم`
+    : isCur ? `⏱️ فاضل <b>${rest}</b> يوم في الشهر · تقدر تصرف <b>${fmt(left / rest)}</b> في اليوم` : `✅ الشهر خلص وإنت جوّه الميزانية`;
+  return `<div class="card"><h4 class="bud-t">💰 ميزانية ${monthName(ym)}</h4><div class="bud">${svg}<div class="kvs">` +
+    kv('الميزانية', fmt(budget)) + kv('اتصرف', fmt(spent)) + kv(over ? 'اتجاوزت' : 'فاضل', signed(left), left < 0 ? 'neg' : 'pos') +
+    `</div></div><div class="pace">${pace}</div></div>`;
+}
+const periodMonth = () => (S.period === 'month' ? curMonth() : S.period === 'last_month' ? prevMonth(curMonth()) : /^\d{4}-\d{2}$/.test(S.period) ? S.period : '');
 const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
 
 // خط كل يوم: أول يوم على اليمين زي التطبيق، والنقطة الملوّنة يوم فيه حركة.
@@ -224,7 +254,7 @@ const sumAvg = (pts) => {
 // 🧾 المعاملات: الأرقام التلاتة، وبعدها قايمة بالأيام أو تقويم الشهر.
 function renderTx(d) {
   const all = flat(d);
-  let h = chips() + kpis(d.total_expense, d.total_income) + daily(d.last_daily) + seg('mode', [['list', '📃 قايمة'], ['cal', '📅 تقويم']], S.mode);
+  let h = chips() + kpis(d.total_expense, d.total_income) + budgetCard(Number(d.total_expense), periodMonth()) + daily(d.last_daily) + seg('mode', [['list', '📃 قايمة'], ['cal', '📅 تقويم']], S.mode);
   if (!all.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
   if (S.mode === 'cal') return app.innerHTML = h + calendar(d, all);
   h += `<div class="card">` + (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
@@ -309,7 +339,7 @@ function renderCat(d) {
 function renderReports() {
   const cur = curMonth(), m0 = months.find((m) => m.month === cur) || { expense: 0, income: 0 };
   const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
-  app.innerHTML = `<div class="daily" style="margin:0 0 8px">📅 إحصائيات ${monthName(cur)}</div>` + kpis(m0.expense, m0.income) +
+  app.innerHTML = `<div class="daily" style="margin:0 0 8px">📅 إحصائيات ${monthName(cur)}</div>` + kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense), cur) +
     `<div class="card"><div class="mrow th"><span>الشهر</span><span>نفقات</span><span>دخل</span><span>الفرق</span></div>` +
     years.map((y) => `<div class="yr">${y}</div>` + months.filter((m) => m.month.startsWith(y)).map((m) => {
       const diff = m.income - m.expense;
@@ -399,6 +429,7 @@ async function getData(period) {
   if (!cache[period]) {
     cache[period] = await post({ period });
     if (Array.isArray(cache[period].months)) months = cache[period].months;
+    if (cache[period].budget != null) budget = Number(cache[period].budget) || 0;
   }
   return cache[period];
 }
