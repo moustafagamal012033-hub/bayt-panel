@@ -91,6 +91,8 @@
   .kv { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
   .kv span { color:var(--muted); flex:none; }
   .kv b { text-align:left; font-weight:600; }
+  /* رقم المبلغ في شباك الحركة بلون تصنيفها وتقيل، زي القايمة (اختيار مصطفى ١، 2026-10-30). */
+  .kv .amt { color:color-mix(in srgb, var(--c) 60%, var(--ink)); font-weight:700; font-size:19px; }
   .sh .close { width:100%; margin-top:14px; border:0; border-radius:12px; padding:11px; background:var(--accent); color:#fff; font-size:15px; }
   .stat { flex:1; text-align:center; border-radius:12px; padding:10px; background:var(--card); }
   .stat b { display:block; font-size:24px; color:var(--st); }
@@ -457,7 +459,7 @@ function openItem(id) {
   const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
   openSheet(`<div class="shhd">${ICON[it.category] || '▫️'}<b>${esc(it.category)}</b></div>` +
     kv('النوع', KIND[it.kind] || esc(it.kind)) +
-    kv('المبلغ', `<span class="ltr">${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</span> درهم`) +
+    kv('المبلغ', `<span class="ltr amt" style="--c:${color(it.category, it.kind === 'income')}">${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</span> درهم`) +
     kv('التاريخ', `${dayName(it.day)} ${it.day.slice(0, 4)} · <span class="ltr">${esc(it.time)}</span>`) +
     kv('المصدر', SRC[it.source] || esc(it.source)) +
     kv('الملاحظة', esc(it.note || '—')) + itemActions(it));
