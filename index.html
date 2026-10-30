@@ -36,7 +36,10 @@
   .bar .track { height:6px; background:var(--line); border-radius:3px; margin-top:4px; }
   .bar .fill { height:6px; border-radius:3px; }
   .day h3 { font-size:13px; color:var(--muted); margin:14px 0 6px; display:flex; justify-content:space-between; }
-  .item { display:flex; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  /* كل حركة كارت صغير بلون تصنيفها، والكلام فوقه بلون اللوحة عشان يفضل مقروء (طلب مصطفى 2026-10-30).
+     والرقم بلون التصنيف ممزوج بلون الكلام، فبيفتح في الوضع الغامق ويغمق في الفاتح. */
+  .item { --c:var(--muted); display:flex; justify-content:space-between; gap:8px; padding:9px 12px; margin:6px 0; border-radius:12px; border-inline-start:4px solid var(--c); background:color-mix(in srgb, var(--c) 16%, transparent); font-size:14px; }
+  .item b { color:color-mix(in srgb, var(--c) 60%, var(--ink)); }
   .item small { color:var(--muted); display:block; }
   .msg { text-align:center; color:var(--muted); padding:40px 0; }
   .tap { cursor:pointer; }
@@ -167,12 +170,20 @@
 <script>
 const API = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-data';
 const WRITE = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-write';
-const COLORS = ['#d6336c','#f59f00','#37b24d','#1c7ed6','#7048e8','#0ca678','#e8590c','#868e96'];
-// أيقونة لكل تصنيف، نفس أيقونات ملخص الساعة 10. وتصنيف ليه لون ثابت، والباقي بياخد لون من القايمة بالترتيب.
+// أيقونة لكل تصنيف، نفس أيقونات ملخص الساعة 10.
 const ICON = { 'أكل':'🍔', 'إلكترونيات':'🖥️', 'اشتراكات':'📱', 'رسوم وعمولات':'🏦', 'بيت وفواتير':'🏠', 'عربية وبنزين':'🚗',
   'قسط الشقة':'🏢', 'أهل':'👨‍👩‍👧', 'شغل':'💼', 'صحة':'💊', 'ملابس':'👕', 'أخرى':'📦', 'دخل ATM':'💹' };
-const STYLE = { 'إلكترونيات': { color: '#9b8cf2' } };
-const color = (c, i) => (STYLE[c] && STYLE[c].color) || COLORS[i % COLORS.length];
+// لون ثابت لكل تصنيف، نفسه في الدايرة والشرايط وسطر الحركة. والأخضر للدخل بس (طلب مصطفى 2026-10-30).
+const GREENS = ['#37b24d', '#69db7c', '#2b8a3e', '#b2f2bb'];
+const CAT_COLOR = { 'أهل':'#d6336c', 'أكل':'#f59f00', 'إلكترونيات':'#9b8cf2', 'عربية وبنزين':'#1c7ed6', 'رسوم وعمولات':'#7048e8',
+  'اشتراكات':'#22b8cf', 'بيت وفواتير':'#e8590c', 'قسط الشقة':'#be4bdb', 'شغل':'#a9746e', 'صحة':'#ff8787', 'ملابس':'#f783ac', 'أخرى':'#868e96' };
+const SPARE = ['#4c6ef5', '#e64980', '#fab005', '#c2255c'];
+const DAYS = ['#d6336c', '#f59f00', '#1c7ed6', '#7048e8', '#e8590c', '#868e96'];
+const hash = (s) => [...String(s)].reduce((a, ch) => a + ch.codePointAt(0), 0);
+// تصنيف جديد مش في القايمة بياخد لون ثابت من اسمه، عشان يفضل نفس اللون في كل مكان.
+const color = (c, income) => income ? (c === 'دخل ATM' ? GREENS[0] : GREENS[1 + hash(c) % (GREENS.length - 1)])
+  : CAT_COLOR[c] || SPARE[hash(c) % SPARE.length];
+const dayColor = (i) => (S.kind === 'income' ? GREENS : DAYS)[i % (S.kind === 'income' ? GREENS : DAYS).length];
 const label = (c) => (ICON[c] ? ICON[c] + ' ' : '') + esc(c);
 const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const monthName = (ym) => `${MONTHS[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
@@ -194,7 +205,7 @@ function daily(l) {
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const SRC = { email_alhilal: '📧 الهلال', bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
 const KIND = { expense: 'نفقة', income: 'دخل', refund: 'مرتجع' };
-function donut(cats, total) {
+function donut(cats, total, col) {
   if (!total) return '';
   let a = 0, paths = '';
   cats.forEach((c, i) => {
@@ -202,7 +213,7 @@ function donut(cats, total) {
     const a2 = a + f * 2 * Math.PI, large = f > 0.5 ? 1 : 0;
     const p = (t) => [70 + 60 * Math.sin(t), 70 - 60 * Math.cos(t)];
     const [x1, y1] = p(a), [x2, y2] = p(a2 - 1e-6);
-    paths += `<path d="M${x1} ${y1} A60 60 0 ${large} 1 ${x2} ${y2}" stroke="${color(c.category, i)}" stroke-width="20" fill="none"/>`;
+    paths += `<path d="M${x1} ${y1} A60 60 0 ${large} 1 ${x2} ${y2}" stroke="${col(c, i)}" stroke-width="20" fill="none"/>`;
     a = a2;
   });
   return `<svg viewBox="0 0 140 140">${paths}<text x="70" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor">${fmt(total)}</text></svg>`;
@@ -274,17 +285,17 @@ function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${y
 // كروت ميزانية التصنيفات: الصرف من by_category بتاع نفس الشهر، وتصنيف ما اتصرفش فيه بيبان 0%.
 function catBudgetsCard(d, ym) {
   if (!catBudgets.length || !ym) return '';
-  const spent = {}, idx = {};
-  (d.by_category || []).forEach((c, i) => { spent[c.category] = Number(c.total); idx[c.category] = i; });
+  const spent = {};
+  (d.by_category || []).forEach((c) => { spent[c.category] = Number(c.total); });
   return `<div class="card"><h4 class="bud-t">🗂️ ميزانية التصنيفات</h4><div class="cbs">` + catBudgets.map((b) => {
     const s = spent[b.category] || 0, st = budgetState(s, Number(b.amount), ym);
-    return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, idx[b.category] ?? 0)}">${ring(st, false)}
+    return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, false)}">${ring(st, false)}
       <div><b>${label(b.category)}</b><small><span>${fmt(s)}</span> من <span>${fmt(b.amount)}</span></small>` +
       `<small class="${st.over ? 'neg' : 'pos'}">${st.over ? 'اتجاوزت' : 'فاضل'} <span>${fmt(Math.abs(st.left))}</span></small></div></div>`;
   }).join('') + `</div></div>`;
 }
 const periodMonth = () => (S.period === 'month' ? curMonth() : S.period === 'last_month' ? prevMonth(curMonth()) : /^\d{4}-\d{2}$/.test(S.period) ? S.period : '');
-const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
+const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}" style="--c:${color(it.category, it.kind === 'income')}"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
 
 // خط كل يوم: أول يوم على اليمين زي التطبيق، والنقطة الملوّنة يوم فيه حركة.
 function line(pts, col) {
@@ -356,7 +367,7 @@ function catsOf(d) {
   return Object.values(g).sort((a, b) => b.total - a.total);
 }
 function renderStats(d) {
-  const cats = catsOf(d), total = cats.reduce((a, c) => a + Number(c.total), 0);
+  const cats = catsOf(d), total = cats.reduce((a, c) => a + Number(c.total), 0), inc = S.kind === 'income';
   let h = chips() + seg('kind', [['expense', '💸 نفقات'], ['income', '💰 دخل']], S.kind);
   if (!cats.length) return app.innerHTML = h + `<div class="msg">مفيش ${S.kind === 'income' ? 'دخل' : 'نفقات'} في الفترة دي.</div>`;
   const perDay = {};
@@ -368,15 +379,15 @@ function renderStats(d) {
   const col = S.kind === 'income' ? '#2f9e44' : '#d6336c';
   const pts = series(d, isKind);
   h += `<div class="card"><div class="pager">
-    <div class="page donut">${donut(cats, total)}<div class="legend">` +
-      cats.map((c, i) => `<div><span><i class="dot" style="background:${color(c.category, i)}"></i>${label(c.category)}</span><b>${Math.round(c.total / total * 100)}%</b></div>`).join('') + `</div></div>
-    <div class="page donut">${donut(topCats, total)}<div class="legend"><div><small style="color:var(--muted)">أكبر الأيام</small></div>` +
-      topCats.map((c, i) => `<div><span><i class="dot" style="background:${color(c.category, i)}"></i>${c.category === 'أخرى' ? 'أيام تانية' : dayName(c.category)}</span><b>${fmt(c.total)}</b></div>`).join('') + `</div></div>
+    <div class="page donut">${donut(cats, total, (c) => color(c.category, inc))}<div class="legend">` +
+      cats.map((c) => `<div><span><i class="dot" style="background:${color(c.category, inc)}"></i>${label(c.category)}</span><b>${Math.round(c.total / total * 100)}%</b></div>`).join('') + `</div></div>
+    <div class="page donut">${donut(topCats, total, (c, i) => dayColor(i))}<div class="legend"><div><small style="color:var(--muted)">أكبر الأيام</small></div>` +
+      topCats.map((c, i) => `<div><span><i class="dot" style="background:${dayColor(i)}"></i>${c.category === 'أخرى' ? 'أيام تانية' : dayName(c.category)}</span><b>${fmt(c.total)}</b></div>`).join('') + `</div></div>
     <div class="page">${line(pts, col)}${sumAvg(pts)}</div>
   </div><div class="dots">${[0, 1, 2].map((i) => `<i data-act="page" data-v="${i}" class="tap${S.page === i ? ' on' : ''}"></i>`).join('')}</div></div>`;
-  h += `<div class="card">` + cats.map((c, i) => `<div class="bar tap" data-act="cat" data-v="${esc(c.category)}" data-c="${color(c.category, i)}">
+  h += `<div class="card">` + cats.map((c) => `<div class="bar tap" data-act="cat" data-v="${esc(c.category)}" data-c="${color(c.category, inc)}">
       <div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${Math.max(2, c.total / total * 100)}%;background:${color(c.category, i)}"></div></div></div>`).join('') + `</div>`;
+      <div class="track"><div class="fill" style="width:${Math.max(2, c.total / total * 100)}%;background:${color(c.category, inc)}"></div></div></div>`).join('') + `</div>`;
   app.innerHTML = h;
   const pager = app.querySelector('.pager');
   if (S.page) pager.children[S.page].scrollIntoView({ inline: 'start', block: 'nearest' });
