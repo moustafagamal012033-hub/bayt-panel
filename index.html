@@ -297,7 +297,7 @@ function catBudgetsCard(d, ym) {
   }).join('') + `</div></div>`;
 }
 const periodMonth = () => (S.period === 'month' ? curMonth() : S.period === 'last_month' ? prevMonth(curMonth()) : /^\d{4}-\d{2}$/.test(S.period) ? S.period : '');
-const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}" style="--c:${color(it.category, it.kind === 'income')}"><div>${esc(it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
+const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}" style="--c:${color(it.category, it.kind === 'income')}"><div>${esc(it.name_ar || it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
 
 // خط كل يوم: أول يوم على اليمين زي التطبيق، والنقطة الملوّنة يوم فيه حركة.
 function line(pts, col) {
@@ -411,7 +411,7 @@ function renderCat(d) {
     `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
     seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
     `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
-      <div class="row"><span>${esc(it.note || it.category)}</span><b class="ltr">${fmt(it.amount)}</b></div>
+      <div class="row"><span>${esc(it.name_ar || it.note || it.category)}</span><b class="ltr">${fmt(it.amount)}</b></div>
       <div class="track"><div class="fill" style="width:${total ? Math.max(2, val(it) / total * 100) : 0}%;background:${S.catColor}"></div></div>
       <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span></span><span class="ltr">${total ? Math.round(val(it) / total * 100) : 0}%</span></div></div>`).join('') + `</div>`;
 }
@@ -462,7 +462,8 @@ function openItem(id) {
     kv('المبلغ', `<span class="ltr amt" style="--c:${color(it.category, it.kind === 'income')}">${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</span> درهم`) +
     kv('التاريخ', `${dayName(it.day)} ${it.day.slice(0, 4)} · <span class="ltr">${esc(it.time)}</span>`) +
     kv('المصدر', SRC[it.source] || esc(it.source)) +
-    kv('الملاحظة', esc(it.note || '—')) + itemActions(it));
+    // #62: الاسم العربي للعرض، والاسم الأصلي من إيميل البنك تحته كدليل.
+    (it.name_ar ? kv('المحل', esc(it.name_ar)) + kv('في البنك', esc(it.note)) : kv('الملاحظة', esc(it.note || '—'))) + itemActions(it));
 }
 // موجة ٣: التعديل لحد ما الحركة تنزل «💸 سجل الفلوس»، وبعدها الملف هو المالك والتصليح برسالة لكلود.
 function itemActions(it) {
