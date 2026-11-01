@@ -285,13 +285,17 @@ function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${y
     kv('الميزانية', fmt(amount)) + kv('اتصرف', fmt(spent)) + kv(over ? 'اتجاوزت' : 'فاضل', signed(left), left < 0 ? 'neg' : 'pos') +
     `</div></div><div class="pace">${pace}</div></div>`;
 }
+// «أخرى» ظرف لكل تصنيف مالوش ميزانية لوحده، عشان كل درهم يظهر في كارت (اختيار مصطفى 2026-11-01).
+const OTHER = 'أخرى';
+const inOther = (cat) => cat === OTHER || (catBudgets.some((b) => b.category === OTHER) && !catBudgets.some((b) => b.category === cat));
 // كروت ميزانية التصنيفات: الصرف من by_category بتاع نفس الشهر، وتصنيف ما اتصرفش فيه بيبان 0%.
 function catBudgetsCard(d, ym) {
   if (!catBudgets.length || !ym) return '';
   const spent = {};
   (d.by_category || []).forEach((c) => { spent[c.category] = Number(c.total); });
   return `<div class="card"><h4 class="bud-t">🗂️ ميزانية التصنيفات</h4><div class="cbs">` + catBudgets.map((b) => {
-    const s = spent[b.category] || 0, st = budgetState(s, Number(b.amount), ym);
+    const s = b.category === OTHER ? (d.by_category || []).reduce((a, c) => a + (inOther(c.category) ? Number(c.total) : 0), 0) : spent[b.category] || 0;
+    const st = budgetState(s, Number(b.amount), ym);
     return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, false)}">${ring(st, false, color(b.category, false))}
       <div><b>${label(b.category)}</b><small><span>${fmt(s)}</span> من <span>${fmt(b.amount)}</span></small>` +
       `<small class="${st.over ? 'neg' : 'pos'}">${st.over ? 'اتجاوزت' : 'فاضل'} <span>${fmt(Math.abs(st.left))}</span></small></div></div>`;
@@ -405,19 +409,25 @@ function renderStats(d) {
   }, { passive: true });
 }
 function renderCat(d) {
-  const pred = (i) => isKind(i) && i.category === S.cat;
+  const group = S.group && S.cat === OTHER && S.kind === 'expense';
+  const pred = (i) => isKind(i) && (group ? inOther(i.category) : i.category === S.cat);
   const items = flat(d).filter(pred), total = items.reduce((a, i) => a + val(i), 0);
   const pts = series(d, pred);
   const sorted = items.slice().sort(S.sort === 'amount' ? (a, b) => val(b) - val(a) : (a, b) => (b.day + b.time).localeCompare(a.day + a.time));
-  const cb = S.kind === 'expense' && catBudgets.find((b) => b.category === S.cat);
+  const cb = S.kind === 'expense' && (S.cat !== OTHER || group) && catBudgets.find((b) => b.category === S.cat);
+  const parts = {};
+  if (group) items.forEach((i) => { const p = parts[i.category] = parts[i.category] || { category: i.category, total: 0, count: 0 }; p.total += val(i); p.count++; });
+  const inner = !group ? '' : `<div class="card"><div class="note">جوّه «أخرى»: كل تصنيف مالوش ميزانية لوحده</div>` +
+    Object.values(parts).sort((a, b) => b.total - a.total).map((c) => `<div class="bar"><div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
+      <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${color(c.category, false)}"></div></div></div>`).join('') + `</div>`;
   app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>` +
     (cb ? budgetCard(total, periodMonth(), Number(cb.amount), `💰 ميزانية ${label(S.cat)}`, S.catColor) : '') +
-    `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
+    inner + `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
     seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
     `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
       <div class="row"><span>${esc(it.name_ar || it.note || it.category)}</span><b class="ltr">${fmt(it.amount)}</b></div>
       <div class="track"><div class="fill" style="width:${total ? Math.max(2, val(it) / total * 100) : 0}%;background:${S.catColor}"></div></div>
-      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span></span><span class="ltr">${total ? Math.round(val(it) / total * 100) : 0}%</span></div></div>`).join('') + `</div>`;
+      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span>${group ? ' · ' + label(it.category) : ''}</span><span class="ltr">${total ? Math.round(val(it) / total * 100) : 0}%</span></div></div>`).join('') + `</div>`;
 }
 
 // 📑 التقارير زي التطبيق: «إحصائيات الشهر» و«الحسابات» زرارين، كل دوسة بتفتح الكارت كله أو تقفله
@@ -605,9 +615,9 @@ app.addEventListener('click', (e) => {
     case 'kind': S.kind = v; S.cat = null; return show();
     case 'mode': S.mode = v; return show();
     case 'sort': S.sort = v; return show();
-    case 'cat': S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
+    case 'cat': S.group = false; S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
     // من كارت ميزانية تصنيف في التقارير: صفحة التصنيف نفسها في الإحصائيات، على الشهر ده.
-    case 'bcat': S.view = 'stats'; S.kind = 'expense'; S.period = 'month'; S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
+    case 'bcat': S.group = v === OTHER; S.view = 'stats'; S.kind = 'expense'; S.period = 'month'; S.cat = v; S.catColor = t.dataset.c; S.sort = 'date'; window.scrollTo(0, 0); return show();
     case 'back': return goBack();
     case 'sec':
       open[v] = !open[v];
