@@ -258,6 +258,7 @@ function kpis(x, i) {
 }
 // 💰 كارت الميزانية: الرقم جاي من الباب مش من الصفحة، لأن الصفحة نفسها على GitHub مكشوفة.
 // الدايرة أخضر لو الصرف ماشي أبطأ من الشهر، وبرتقاني لو أسرع، وأحمر لو عدّى الميزانية.
+// ودايرة ميزانية التصنيف بلون تصنيفها، والنسبة بس هي اللي بتتلوّن بالحالة (اختيار مصطفى 2026-11-01).
 function budgetState(spent, amount, ym) {
   const days = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0)).getUTCDate();
   const isCur = ym === curMonth(), today = isCur ? Number(dubaiToday().slice(8, 10)) : days;
@@ -265,21 +266,21 @@ function budgetState(spent, amount, ym) {
   const col = over ? 'var(--red)' : f > today / days ? '#f08c00' : 'var(--green)';
   return { f, over, left: amount - spent, col, isCur, today, days, rest: days - today + 1 };
 }
-function ring(st, sub) {
+function ring(st, sub, stroke) {
   const R = 46, C = 2 * Math.PI * R, t = (st.today / st.days) * 2 * Math.PI;
   const tick = st.isCur ? `<line x1="${56 + 36 * Math.sin(t)}" y1="${56 - 36 * Math.cos(t)}" x2="${56 + 56 * Math.sin(t)}" y2="${56 - 56 * Math.cos(t)}" stroke="var(--ink)" stroke-width="2.5"/>` : '';
   return `<svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" stroke="var(--line)" stroke-width="11" fill="none"/>
-    <circle cx="56" cy="56" r="${R}" stroke="${st.col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.min(st.f, 1) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
+    <circle cx="56" cy="56" r="${R}" stroke="${stroke || st.col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.min(st.f, 1) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
     <text x="56" y="${sub ? 58 : 63}" text-anchor="middle" font-size="${sub ? 18 : 24}" font-weight="700" fill="${st.col}">${Math.round(st.f * 100)}%</text>` +
     (sub ? `<text x="56" y="75" text-anchor="middle" font-size="11" fill="var(--muted)">${st.over ? 'اتجاوزت' : 'اتصرف'}</text>` : '') + `</svg>`;
 }
-function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${ym && monthName(ym)}`) {
+function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${ym && monthName(ym)}`, ringCol) {
   if (!amount || !ym) return '';
   const st = budgetState(spent, amount, ym), left = st.left;
   const kv = (k, v, c) => `<div class="kv"><span>${k}</span><b class="${c || ''}">${v}</b></div>`;
   const pace = st.over ? `⚠️ عدّيت الميزانية بـ <b>${fmt(-left)}</b> درهم`
     : st.isCur ? `⏱️ فاضل <b>${st.rest}</b> يوم في الشهر · تقدر تصرف <b>${fmt(left / st.rest)}</b> في اليوم` : `✅ الشهر خلص وإنت جوّه الميزانية`;
-  const svg = ring(st, true), over = st.over;
+  const svg = ring(st, true, ringCol), over = st.over;
   return `<div class="card"><h4 class="bud-t">${title}</h4><div class="bud">${svg}<div class="kvs">` +
     kv('الميزانية', fmt(amount)) + kv('اتصرف', fmt(spent)) + kv(over ? 'اتجاوزت' : 'فاضل', signed(left), left < 0 ? 'neg' : 'pos') +
     `</div></div><div class="pace">${pace}</div></div>`;
@@ -291,11 +292,14 @@ function catBudgetsCard(d, ym) {
   (d.by_category || []).forEach((c) => { spent[c.category] = Number(c.total); });
   return `<div class="card"><h4 class="bud-t">🗂️ ميزانية التصنيفات</h4><div class="cbs">` + catBudgets.map((b) => {
     const s = spent[b.category] || 0, st = budgetState(s, Number(b.amount), ym);
-    return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, false)}">${ring(st, false)}
+    return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, false)}">${ring(st, false, color(b.category, false))}
       <div><b>${label(b.category)}</b><small><span>${fmt(s)}</span> من <span>${fmt(b.amount)}</span></small>` +
       `<small class="${st.over ? 'neg' : 'pos'}">${st.over ? 'اتجاوزت' : 'فاضل'} <span>${fmt(Math.abs(st.left))}</span></small></div></div>`;
   }).join('') + `</div></div>`;
 }
+// ظرف لوحده (اختيار مصطفى 2026-11-01): ميزانية التصنيف اللي عليها outside، زي الأهل، صرفها ما بيتحسبش في كارت ميزانية الشهر.
+const outsideSpent = (d) => (d.by_category || []).reduce((a, c) =>
+  a + (catBudgets.some((b) => b.outside && b.category === c.category) ? Number(c.total) : 0), 0);
 const periodMonth = () => (S.period === 'month' ? curMonth() : S.period === 'last_month' ? prevMonth(curMonth()) : /^\d{4}-\d{2}$/.test(S.period) ? S.period : '');
 const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}" style="--c:${color(it.category, it.kind === 'income')}"><div>${esc(it.name_ar || it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
 
@@ -328,7 +332,7 @@ const sumAvg = (pts) => {
 // 🧾 المعاملات: الأرقام التلاتة، وبعدها قايمة بالأيام أو تقويم الشهر.
 function renderTx(d) {
   const all = flat(d);
-  let h = chips() + kpis(d.total_expense, d.total_income) + budgetCard(Number(d.total_expense), periodMonth()) + daily(d.last_daily) + seg('mode', [['list', '📃 قايمة'], ['cal', '📅 تقويم']], S.mode);
+  let h = chips() + kpis(d.total_expense, d.total_income) + budgetCard(Number(d.total_expense) - outsideSpent(d), periodMonth()) + daily(d.last_daily) + seg('mode', [['list', '📃 قايمة'], ['cal', '📅 تقويم']], S.mode);
   if (!all.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
   if (S.mode === 'cal') return app.innerHTML = h + calendar(d, all);
   h += `<div class="card">` + (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
@@ -407,7 +411,7 @@ function renderCat(d) {
   const sorted = items.slice().sort(S.sort === 'amount' ? (a, b) => val(b) - val(a) : (a, b) => (b.day + b.time).localeCompare(a.day + a.time));
   const cb = S.kind === 'expense' && catBudgets.find((b) => b.category === S.cat);
   app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>` +
-    (cb ? budgetCard(total, periodMonth(), Number(cb.amount), `💰 ميزانية ${label(S.cat)}`) : '') +
+    (cb ? budgetCard(total, periodMonth(), Number(cb.amount), `💰 ميزانية ${label(S.cat)}`, S.catColor) : '') +
     `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
     seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
     `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
@@ -421,7 +425,7 @@ function renderCat(d) {
 function renderReports(d) {
   const cur = curMonth(), m0 = months.find((m) => m.month === cur) || { expense: 0, income: 0 };
   const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
-  app.innerHTML = section('stats', `📅 إحصائيات ${monthName(cur)}`, () => kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense), cur) + catBudgetsCard(d, cur)) +
+  app.innerHTML = section('stats', `📅 إحصائيات ${monthName(cur)}`, () => kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense) - outsideSpent(d), cur) + catBudgetsCard(d, cur)) +
     section('accounts', '🏦 الحسابات', () => accountsCard(d.accounts || accounts)) +
     `<div class="card"><div class="mrow th"><span>الشهر</span><span>نفقات</span><span>دخل</span><span>الفرق</span></div>` +
     years.map((y) => `<div class="yr">${y}</div>` + months.filter((m) => m.month.startsWith(y)).map((m) => {
