@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-b7A8VQ/YcmINSjcJvW6QYq5yZM9jyGZIome1ko6crcU='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-KhCOKNCWUAc+BJYpCk04nPYRstDG8HHTRTeGXS6Y7ug='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>لوحة الفلوس</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -1142,10 +1142,11 @@ async function show() {
       return;
     }
     // الأسبوع فرع لوحده: رده مالوش دعوة بأرقام الفلوس، وبيتصدّق دقيقتين زيها.
+    // ومفتاحه في الكاش «view:week»، لأن «week» مفتاح «آخر 7 أيام» في الفلوس (كانوا بيدوسوا على بعض، 2026-11-06).
     if (S.view === 'week') {
-      const c = cache.week;
-      if (!c || Date.now() - c.at > FRESH_MS) cache.week = { at: Date.now(), d: await post({ view: 'week' }) };
-      if (my === seq) renderWeek(cache.week.d.week);
+      const c = cache['view:week'];
+      if (!c || Date.now() - c.at > FRESH_MS) cache['view:week'] = { at: Date.now(), d: await post({ view: 'week' }) };
+      if (my === seq) renderWeek(cache['view:week'].d.week);
       return;
     }
     const d = await getData(S.view === 'reports' ? 'month' : S.period);
