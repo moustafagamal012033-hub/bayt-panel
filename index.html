@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-G9HnB6pPKjH8AKFaIEqiHA5ojyAo0a4STfhQsoOs8lM='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>لوحة الفلوس</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -36,14 +37,14 @@
   .bar .track { height:6px; background:var(--line); border-radius:3px; margin-top:4px; }
   .bar .fill { height:6px; border-radius:3px; }
   .day h3 { font-size:13px; color:var(--muted); margin:14px 0 6px; display:flex; justify-content:space-between; }
-  /* كل حركة كارت صغير بلون تصنيفها، والكلام فوقه بلون اللوحة عشان يفضل مقروء (طلب مصطفى 2026-10-30).
+  /* كل حركة كارت صغير بلون تصنيفها، والكلام فوقه بلون اللوحة عشان يفضل مقروء (طلب 2026-10-30).
      والرقم بلون التصنيف ممزوج بلون الكلام، فبيفتح في الوضع الغامق ويغمق في الفاتح. */
   .item { --c:var(--muted); display:flex; justify-content:space-between; gap:8px; padding:9px 12px; margin:6px 0; border-radius:12px; border-inline-start:4px solid var(--c); background:color-mix(in srgb, var(--c) 16%, transparent); font-size:14px; }
   .item b { color:color-mix(in srgb, var(--c) 60%, var(--ink)); }
   .item small { color:var(--muted); display:block; }
   .msg { text-align:center; color:var(--muted); padding:40px 0; }
   .tap { cursor:pointer; }
-  /* شريط الفترات والزراير المقسومة، زي التطبيق في فيديو مصطفى (موجة ١، 2026-10-29). */
+  /* شريط الفترات والزراير المقسومة، زي التطبيق في الفيديو المرجعي (موجة ١، 2026-10-29). */
   .chips { display:flex; gap:6px; overflow-x:auto; margin:0 -16px 12px; padding:0 16px; scrollbar-width:none; }
   .chips::-webkit-scrollbar { display:none; }
   .chips button { flex:none; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:6px 14px; font-size:13px; }
@@ -91,7 +92,7 @@
   .kv { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px; }
   .kv span { color:var(--muted); flex:none; }
   .kv b { text-align:left; font-weight:600; }
-  /* رقم المبلغ في شباك الحركة بلون تصنيفها وتقيل، زي القايمة (اختيار مصطفى ١، 2026-10-30). */
+  /* رقم المبلغ في شباك الحركة بلون تصنيفها وتقيل، زي القايمة (اختيار ١، 2026-10-30). */
   .kv .amt { color:color-mix(in srgb, var(--c) 60%, var(--ink)); font-weight:700; font-size:19px; }
   .sh .close { width:100%; margin-top:14px; border:0; border-radius:12px; padding:11px; background:var(--accent); color:#fff; font-size:15px; }
   .stat { flex:1; text-align:center; border-radius:12px; padding:10px; background:var(--card); }
@@ -175,7 +176,7 @@ const WRITE = 'https://rsvsuwwzlhnxghyqfyzk.supabase.co/functions/v1/bayt-panel-
 // أيقونة لكل تصنيف، نفس أيقونات ملخص الساعة 10.
 const ICON = { 'أكل':'🍔', 'إلكترونيات':'🖥️', 'اشتراكات':'📱', 'رسوم وعمولات':'🏦', 'بيت وفواتير':'🏠', 'عربية وبنزين':'🚗',
   'قسط الشقة':'🏢', 'أهل':'👨‍👩‍👧', 'شغل':'💼', 'صحة':'💊', 'ملابس':'👕', 'أخرى':'📦', 'دخل ATM':'💹' };
-// لون ثابت لكل تصنيف، نفسه في الدايرة والشرايط وسطر الحركة. والأخضر للدخل بس (طلب مصطفى 2026-10-30).
+// لون ثابت لكل تصنيف، نفسه في الدايرة والشرايط وسطر الحركة. والأخضر للدخل بس (طلب 2026-10-30).
 const GREENS = ['#37b24d', '#69db7c', '#2b8a3e', '#b2f2bb'];
 const CAT_COLOR = { 'أهل':'#d6336c', 'أكل':'#f59f00', 'إلكترونيات':'#9b8cf2', 'عربية وبنزين':'#1c7ed6', 'رسوم وعمولات':'#7048e8',
   'اشتراكات':'#22b8cf', 'بيت وفواتير':'#e8590c', 'قسط الشقة':'#be4bdb', 'شغل':'#a9746e', 'صحة':'#ff8787', 'ملابس':'#f783ac', 'أخرى':'#868e96' };
@@ -197,6 +198,11 @@ const sheet = document.getElementById('sheet');
 const fmt = (n) => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
 // علامة سالب واحدة في اللوحة كلها: «−».
 const signed = (n) => (Number(n) < 0 ? '−' : '') + fmt(Math.abs(Number(n)));
+// المرتجع فلوس راجعة، فبيتعرض «+» زي الدخل. ومجموع يوم صرف بالسالب معناه إن المرتجع أكبر من الصرف.
+const sign = (it) => (it.kind === 'expense' ? '−' : '+');
+const dayTotal = (n) => (Number(n) < 0 ? '+' + fmt(-Number(n)) : fmt(n));
+// نسبة آمنة: من غير Infinity ولا NaN لو المجموع صفر أو بالسالب.
+const pct = (part, whole) => (whole > 0 ? Math.round(Math.max(0, part) / whole * 100) : 0);
 function daily(l) {
   if (!l || !l.day) return '';
   const day = `<span class="ltr">${esc(l.day)}</span>`;
@@ -205,7 +211,9 @@ function daily(l) {
   return `<div class="daily">🌙 آخر ملخص: يوم ${day}، اتبعت الساعة <span class="ltr">${t}</span></div>`;
 }
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-const SRC = { email_alhilal: '📧 الهلال', bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
+const SRC = { bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
+// أي مصدر أوله email_ هو إيميل البنك، من غير ما اسم البنك يتكتب في الصفحة.
+const srcName = (s) => SRC[s] || (String(s).startsWith('email_') ? '📧 البنك' : esc(s));
 const KIND = { expense: 'نفقة', income: 'دخل', refund: 'مرتجع' };
 function donut(cats, total, col) {
   if (!total) return '';
@@ -225,7 +233,7 @@ function donut(cats, total, col) {
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
 let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [], accounts = null;
-// أقسام التقارير: الإحصائيات مفتوحة من الأول، والحسابات مقفولة لحد دوسة مصطفى (#60).
+// أقسام التقارير: الإحصائيات مفتوحة من الأول، والحسابات مقفولة لحد أول دوسة (#60).
 const open = { stats: true, accounts: false };
 const dubaiToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dubai' });
 const curMonth = () => dubaiToday().slice(0, 7);
@@ -247,7 +255,7 @@ function chips() {
   const cur = curMonth(), last = prevMonth(cur);
   const list = [['week', 'آخر 7 أيام'], ['month', 'الشهر ده'], ['last_month', 'الشهر اللي فات']]
     .concat(months.map((m) => m.month).filter((m) => m < last).map((m) => [m, monthName(m)]));
-  return `<div class="chips">${list.map(([p, t]) => `<button data-act="period" data-v="${p}" class="${S.period === p ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  return `<div class="chips">${list.map(([p, t]) => `<button data-act="period" data-v="${esc(p)}" class="${S.period === p ? 'on' : ''}">${esc(t)}</button>`).join('')}</div>`;
 }
 const seg = (act, opts, on) => `<div class="seg">${opts.map(([v, t]) => `<button data-act="${act}" data-v="${v}" class="${on === v ? 'on' : ''}">${t}</button>`).join('')}</div>`;
 function kpis(x, i) {
@@ -258,11 +266,11 @@ function kpis(x, i) {
 }
 // 💰 كارت الميزانية: الرقم جاي من الباب مش من الصفحة، لأن الصفحة نفسها على GitHub مكشوفة.
 // الدايرة أخضر لو الصرف ماشي أبطأ من الشهر، وبرتقاني لو أسرع، وأحمر لو عدّى الميزانية.
-// ودايرة ميزانية التصنيف بلون تصنيفها، والنسبة بس هي اللي بتتلوّن بالحالة (اختيار مصطفى 2026-11-01).
+// ودايرة ميزانية التصنيف بلون تصنيفها، والنسبة بس هي اللي بتتلوّن بالحالة (اختيار 2026-11-01).
 function budgetState(spent, amount, ym) {
   const days = new Date(Date.UTC(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)), 0)).getUTCDate();
   const isCur = ym === curMonth(), today = isCur ? Number(dubaiToday().slice(8, 10)) : days;
-  const f = spent / amount, over = spent > amount;
+  const f = spent / amount, over = Math.round((spent - amount) * 100) > 0;
   const col = over ? 'var(--red)' : f > today / days ? '#f08c00' : 'var(--green)';
   return { f, over, left: amount - spent, col, isCur, today, days, rest: days - today + 1 };
 }
@@ -279,13 +287,13 @@ function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${y
   const st = budgetState(spent, amount, ym), left = st.left;
   const kv = (k, v, c) => `<div class="kv"><span>${k}</span><b class="${c || ''}">${v}</b></div>`;
   const pace = st.over ? `⚠️ عدّيت الميزانية بـ <b>${fmt(-left)}</b> درهم`
-    : st.isCur ? `⏱️ فاضل <b>${st.rest}</b> يوم في الشهر · تقدر تصرف <b>${fmt(left / st.rest)}</b> في اليوم` : `✅ الشهر خلص وإنت جوّه الميزانية`;
+    : st.isCur ? `⏱️ فاضل <b>${st.rest}</b> يوم في الشهر · تقدر تصرف <b>${fmt(Math.max(0, left) / st.rest)}</b> في اليوم` : `✅ الشهر خلص وإنت جوّه الميزانية`;
   const svg = ring(st, true, ringCol), over = st.over;
   return `<div class="card"><h4 class="bud-t">${title}</h4><div class="bud">${svg}<div class="kvs">` +
     kv('الميزانية', fmt(amount)) + kv('اتصرف', fmt(spent)) + kv(over ? 'اتجاوزت' : 'فاضل', signed(left), left < 0 ? 'neg' : 'pos') +
     `</div></div><div class="pace">${pace}</div></div>`;
 }
-// «أخرى» ظرف لكل تصنيف مالوش ميزانية لوحده، عشان كل درهم يظهر في كارت (اختيار مصطفى 2026-11-01).
+// «أخرى» ظرف لكل تصنيف مالوش ميزانية لوحده، عشان كل درهم يظهر في كارت (اختيار 2026-11-01).
 const OTHER = 'أخرى';
 const inOther = (cat) => cat === OTHER || (catBudgets.some((b) => b.category === OTHER) && !catBudgets.some((b) => b.category === cat));
 // كروت ميزانية التصنيفات: الصرف من by_category بتاع نفس الشهر، وتصنيف ما اتصرفش فيه بيبان 0%.
@@ -301,11 +309,11 @@ function catBudgetsCard(d, ym) {
       `<small class="${st.over ? 'neg' : 'pos'}">${st.over ? 'اتجاوزت' : 'فاضل'} <span>${fmt(Math.abs(st.left))}</span></small></div></div>`;
   }).join('') + `</div></div>`;
 }
-// ظرف لوحده (اختيار مصطفى 2026-11-01): ميزانية التصنيف اللي عليها outside، زي الأهل، صرفها ما بيتحسبش في كارت ميزانية الشهر.
+// ظرف لوحده (اختيار 2026-11-01): ميزانية التصنيف اللي عليها outside، زي الأهل، صرفها ما بيتحسبش في كارت ميزانية الشهر.
 const outsideSpent = (d) => (d.by_category || []).reduce((a, c) =>
   a + (catBudgets.some((b) => b.outside && b.category === c.category) ? Number(c.total) : 0), 0);
 const periodMonth = () => (S.period === 'month' ? curMonth() : S.period === 'last_month' ? prevMonth(curMonth()) : /^\d{4}-\d{2}$/.test(S.period) ? S.period : '');
-const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}" style="--c:${color(it.category, it.kind === 'income')}"><div>${esc(it.name_ar || it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</b></div>`;
+const itemRow = (it, extra) => `<div class="item tap" data-act="item" data-v="${it.id}" style="--c:${color(it.category, it.kind === 'income')}"><div>${esc(it.name_ar || it.note || it.category)}<small>${label(it.category)} · ${extra}</small></div><b>${sign(it)}${fmt(it.amount)}</b></div>`;
 
 // خط كل يوم: أول يوم على اليمين زي التطبيق، والنقطة الملوّنة يوم فيه حركة.
 function line(pts, col) {
@@ -337,20 +345,21 @@ const sumAvg = (pts) => {
 function renderTx(d) {
   const all = flat(d);
   let h = chips() + kpis(d.total_expense, d.total_income) + budgetCard(Number(d.total_expense) - outsideSpent(d), periodMonth()) + daily(d.last_daily) + seg('mode', [['list', '📃 قايمة'], ['cal', '📅 تقويم']], S.mode);
-  if (!all.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>';
-  if (S.mode === 'cal') return app.innerHTML = h + calendar(d, all);
-  h += `<div class="card">` + (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${signed(day.total)}</span></h3>` +
-    day.items.map((it) => itemRow(it, `${SRC[it.source] || ''} · ${esc(it.time)}`)).join('') + `</div>`).join('') + `</div>`;
   // اللي اتلغى من اللوحة في الفترة دي: باهت ومشطوب، وبرّه كل الأرقام، ودوسة عليه بتفتح زرار «رجّع».
+  // وبيظهر حتى لو مفيش ولا حركة تانية، عشان آخر حركة اتلغت تفضل ترجع.
   const cx = cancelled.filter((c) => c.day >= d.from && c.day <= d.to);
   cx.forEach((c) => { byId[c.id] = { ...c, cancelled: true }; });
-  if (cx.length) h += `<div class="card"><div class="day"><h3><span>❌ اتلغت من اللوحة</span><span>${cx.length}</span></h3>` +
+  const cxCard = !cx.length ? '' : `<div class="card"><div class="day"><h3><span>❌ اتلغت من اللوحة</span><span>${cx.length}</span></h3>` +
     cx.map((c) => itemRow(c, `${dayName(c.day)} · ${esc(c.time)}`).replace('class="item tap"', 'class="item tap cx"')).join('') + `</div></div>`;
-  app.innerHTML = h;
+  if (!all.length) return app.innerHTML = h + '<div class="msg">مفيش حركات في الفترة دي.</div>' + cxCard;
+  if (S.mode === 'cal') return app.innerHTML = h + calendar(d, all) + cxCard;
+  h += `<div class="card">` + (d.days || []).map((day) => `<div class="day"><h3><span>${esc(day.day)}</span><span>${dayTotal(day.total)}</span></h3>` +
+    day.items.map((it) => itemRow(it, `${srcName(it.source)} · ${esc(it.time)}`)).join('') + `</div>`).join('') + `</div>`;
+  app.innerHTML = h + cxCard;
 }
 function calendar(d, all) {
-  const spend = {}, inc = {};
-  all.forEach((i) => { if (i.kind === 'income') inc[i.day] = (inc[i.day] || 0) + Number(i.amount); else spend[i.day] = (spend[i.day] || 0) + val(i); });
+  const spend = {}, inc = {}, has = {};
+  all.forEach((i) => { has[i.day] = true; if (i.kind === 'income') inc[i.day] = (inc[i.day] || 0) + Number(i.amount); else spend[i.day] = (spend[i.day] || 0) + val(i); });
   const week = S.period === 'week';
   const first = week ? d.from : d.from.slice(0, 8) + '01';
   const y = Number(d.from.slice(0, 4)), m = Number(d.from.slice(5, 7));
@@ -359,13 +368,13 @@ function calendar(d, all) {
   const heads = ['أحد', 'اتنين', 'تلات', 'أربع', 'خميس', 'جمعة', 'سبت'].map((t) => `<div class="hd">${t}</div>`).join('');
   const cells = '<div class="cd blank"></div>'.repeat(pad) + dates(first, last).map((day) => {
     const s = spend[day] || 0, n = inc[day] || 0, inside = day >= d.from && day <= d.to;
-    const cls = s > 0 ? 'out' : n > 0 ? 'in' : '';
-    return `<div class="cd ${cls}${inside ? '' : ' off'}${s || n ? ' tap' : ''}" ${s || n ? `data-act="day" data-v="${day}"` : ''}><b>${Number(day.slice(8, 10))}</b>` +
-      (s ? `<small>${fmt(s)}</small>` : '') + (n ? `<small class="g">+${fmt(n)}</small>` : '') + `</div>`;
+    const cls = s > 0 ? 'out' : n > 0 || s < 0 ? 'in' : '', any = has[day];
+    return `<div class="cd ${cls}${inside ? '' : ' off'}${any ? ' tap' : ''}" ${any ? `data-act="day" data-v="${day}"` : ''}><b>${Number(day.slice(8, 10))}</b>` +
+      (s ? `<small>${dayTotal(s)}</small>` : '') + (n ? `<small class="g">+${fmt(n)}</small>` : '') + `</div>`;
   }).join('');
   const days = dates(d.from, d.to).length;
   return `<div class="card"><div class="cal">${heads}${cells}</div>
-    <div class="note">متوسط الصرف في اليوم: <b>${fmt(d.total_expense / days)}</b> درهم</div>
+    <div class="note">متوسط الصرف في اليوم: <b>${dayTotal(d.total_expense / days)}</b> درهم</div>
     <div class="note"><i class="dot" style="background:var(--red)"></i>يوم فيه صرف &nbsp; <i class="dot" style="background:var(--green)"></i>يوم فيه دخل بس</div></div>`;
 }
 
@@ -390,14 +399,14 @@ function renderStats(d) {
   const pts = series(d, isKind);
   h += `<div class="card"><div class="pager">
     <div class="page donut">${donut(cats, total, (c) => color(c.category, inc))}<div class="legend">` +
-      cats.map((c) => `<div><span><i class="dot" style="background:${color(c.category, inc)}"></i>${label(c.category)}</span><b>${Math.round(c.total / total * 100)}%</b></div>`).join('') + `</div></div>
+      cats.map((c) => `<div><span><i class="dot" style="background:${color(c.category, inc)}"></i>${label(c.category)}</span><b>${pct(c.total, total)}%</b></div>`).join('') + `</div></div>
     <div class="page donut">${donut(topCats, total, (c, i) => dayColor(i))}<div class="legend"><div><small style="color:var(--muted)">أكبر الأيام</small></div>` +
       topCats.map((c, i) => `<div><span><i class="dot" style="background:${dayColor(i)}"></i>${c.category === 'أخرى' ? 'أيام تانية' : dayName(c.category)}</span><b>${fmt(c.total)}</b></div>`).join('') + `</div></div>
     <div class="page">${line(pts, col)}${sumAvg(pts)}</div>
   </div><div class="dots">${[0, 1, 2].map((i) => `<i data-act="page" data-v="${i}" class="tap${S.page === i ? ' on' : ''}"></i>`).join('')}</div></div>`;
   h += `<div class="card">` + cats.map((c) => `<div class="bar tap" data-act="cat" data-v="${esc(c.category)}" data-c="${color(c.category, inc)}">
       <div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${Math.max(2, c.total / total * 100)}%;background:${color(c.category, inc)}"></div></div></div>`).join('') + `</div>`;
+      <div class="track"><div class="fill" style="width:${total > 0 ? Math.max(2, pct(c.total, total)) : 0}%;background:${color(c.category, inc)}"></div></div></div>`).join('') + `</div>`;
   app.innerHTML = h;
   const pager = app.querySelector('.pager');
   if (S.page) pager.children[S.page].scrollIntoView({ inline: 'start', block: 'nearest' });
@@ -419,28 +428,28 @@ function renderCat(d) {
   if (group) items.forEach((i) => { const p = parts[i.category] = parts[i.category] || { category: i.category, total: 0, count: 0 }; p.total += val(i); p.count++; });
   const inner = !group ? '' : `<div class="card"><div class="note">جوّه «أخرى»: كل تصنيف مالوش ميزانية لوحده</div>` +
     Object.values(parts).sort((a, b) => b.total - a.total).map((c) => `<div class="bar"><div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${total ? Math.max(2, c.total / total * 100) : 0}%;background:${color(c.category, false)}"></div></div></div>`).join('') + `</div>`;
+      <div class="track"><div class="fill" style="width:${total > 0 ? Math.max(2, pct(c.total, total)) : 0}%;background:${color(c.category, false)}"></div></div></div>`).join('') + `</div>`;
   app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>` +
     (cb ? budgetCard(total, periodMonth(), Number(cb.amount), `💰 ميزانية ${label(S.cat)}`, S.catColor) : '') +
     inner + `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
     seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
-    `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
-      <div class="row"><span>${esc(it.name_ar || it.note || it.category)}</span><b class="ltr">${fmt(it.amount)}</b></div>
-      <div class="track"><div class="fill" style="width:${total ? Math.max(2, val(it) / total * 100) : 0}%;background:${S.catColor}"></div></div>
-      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span>${group ? ' · ' + label(it.category) : ''}</span><span class="ltr">${total ? Math.round(val(it) / total * 100) : 0}%</span></div></div>`).join('') + `</div>`;
+    (!sorted.length ? '<div class="msg">مفيش حركات في التصنيف ده في الفترة دي.</div>' : `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
+      <div class="row"><span>${esc(it.name_ar || it.note || it.category)}</span><b class="ltr">${it.kind === 'refund' ? '+' : ''}${fmt(it.amount)}</b></div>
+      <div class="track"><div class="fill" style="width:${total > 0 ? Math.max(2, pct(val(it), total)) : 0}%;background:${S.catColor}"></div></div>
+      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span>${group ? ' · ' + label(it.category) : ''}</span><span class="ltr">${pct(val(it), total)}%</span></div></div>`).join('') + `</div>`);
 }
 
 // 📑 التقارير زي التطبيق: «إحصائيات الشهر» و«الحسابات» زرارين، كل دوسة بتفتح الكارت كله أو تقفله
-// (طلب مصطفى 2026-10-30)، وتحتهم جدول كل الشهور. دوسة على شهر تفتح معاملاته.
+// (طلب 2026-10-30)، وتحتهم جدول كل الشهور. دوسة على شهر تفتح معاملاته.
 function renderReports(d) {
   const cur = curMonth(), m0 = months.find((m) => m.month === cur) || { expense: 0, income: 0 };
   const years = [...new Set(months.map((m) => m.month.slice(0, 4)))];
   app.innerHTML = section('stats', `📅 إحصائيات ${monthName(cur)}`, () => kpis(m0.expense, m0.income) + budgetCard(Number(m0.expense) - outsideSpent(d), cur) + catBudgetsCard(d, cur)) +
-    section('accounts', '🏦 الحسابات', () => accountsCard(d.accounts || accounts)) +
+    section('accounts', '🏦 الحسابات', () => accountsCard(d.accounts)) +
     `<div class="card"><div class="mrow th"><span>الشهر</span><span>نفقات</span><span>دخل</span><span>الفرق</span></div>` +
     years.map((y) => `<div class="yr">${y}</div>` + months.filter((m) => m.month.startsWith(y)).map((m) => {
       const diff = m.income - m.expense;
-      return `<div class="mrow tap" data-act="month" data-v="${m.month}"><span>${MONTHS[Number(m.month.slice(5, 7)) - 1]}</span><b>${fmt(m.expense)}</b><b>${fmt(m.income)}</b><b class="${diff < 0 ? 'neg' : 'pos'}">${signed(diff)}</b></div>`;
+      return `<div class="mrow tap" data-act="month" data-v="${esc(m.month)}"><span>${MONTHS[Number(m.month.slice(5, 7)) - 1]}</span><b>${fmt(m.expense)}</b><b>${fmt(m.income)}</b><b class="${diff < 0 ? 'neg' : 'pos'}">${signed(diff)}</b></div>`;
     }).join('')).join('') +
     (months.length <= 1 ? `<div class="note">الجدول بيكبر شهر بشهر.</div>` : '') + `</div>`;
 }
@@ -450,15 +459,15 @@ function section(key, title, body) {
   const on = open[key];
   return `<button class="sec-h${on ? ' on' : ''}" data-act="sec" data-v="${key}"><span>${title}</span><i>${on ? '▾' : '◂'}</i></button>` + (on ? body() : '');
 }
-// 🏦 الحسابات (موجة ٤، #60): الصافي فوق، وتحته الهلال من إيميل البنك و«حساب الأموال» = الصافي ناقص الهلال.
+// 🏦 الحسابات (موجة ٤، #60): الصافي فوق، وتحته البنك من إيميله و«حساب الأموال» = الصافي ناقص البنك.
 // القسم بيبدأ مقفول، فالأرقام ما بتبانش غير بدوسة، وبيرجع يتقفل مع أي تبويب تاني، وما بيتحفظش في أي مكان.
 function accountsCard(a) {
   if (!a || a.net == null) return '<div class="msg">الحسابات لسه ما اتجهّزتش.</div>';
   const m = (n) => (n == null ? '—' : signed(n));
   return `<div class="card acc-top"><span>صافي القيمة</span><b class="ltr">${m(a.net)}</b></div>` +
     `<div class="card"><div class="acc-h"><span>حساباتي</span><b class="ltr">${m(a.net)}</b></div>` +
-    `<div class="acc"><span class="ic">🏦</span><div><b>بنك الهلال</b><small>من إيميل البنك · <span class="ltr">${esc(a.hilal_at || '—')}</span></small></div><b class="ltr">${m(a.hilal)}</b></div>` +
-    `<div class="acc"><span class="ic">💰</span><div><b>حساب الأموال</b><small>كل فلوسك برّه الهلال</small></div><b class="ltr">${m(a.amwal)}</b></div></div>` +
+    `<div class="acc"><span class="ic">🏦</span><div><b>البنك</b><small>من إيميل البنك · <span class="ltr">${esc(a.hilal_at || '—')}</span></small></div><b class="ltr">${m(a.hilal)}</b></div>` +
+    `<div class="acc"><span class="ic">💰</span><div><b>حساب الأموال</b><small>كل فلوسك برّه البنك</small></div><b class="ltr">${m(a.amwal)}</b></div></div>` +
     `<div class="note" style="margin:-4px 0 12px">الصافي بدأ من قياس يوم <span class="ltr">${esc(a.as_of)}</span>، وبيتحرك لوحده مع كل دخل وصرف في اللوحة.</div>`;
 }
 
@@ -467,15 +476,15 @@ function openSheet(html) {
   sheet.innerHTML = `<div class="sh">${html}<button class="close" data-act="close">قفل</button></div>`;
   sheet.classList.add('on'); backBtn();
 }
-function closeSheet() { sheet.classList.remove('on'); sheet.innerHTML = ''; backBtn(); }
+function closeSheet() { if (busy) return; sheet.classList.remove('on'); sheet.innerHTML = ''; backBtn(); }
 function openItem(id) {
   const it = byId[id]; if (!it) return;
   const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
   openSheet(`<div class="shhd">${ICON[it.category] || '▫️'}<b>${esc(it.category)}</b></div>` +
     kv('النوع', KIND[it.kind] || esc(it.kind)) +
-    kv('المبلغ', `<span class="ltr amt" style="--c:${color(it.category, it.kind === 'income')}">${it.kind === 'income' ? '+' : '−'}${fmt(it.amount)}</span> درهم`) +
+    kv('المبلغ', `<span class="ltr amt" style="--c:${color(it.category, it.kind === 'income')}">${sign(it)}${fmt(it.amount)}</span> درهم`) +
     kv('التاريخ', `${dayName(it.day)} ${it.day.slice(0, 4)} · <span class="ltr">${esc(it.time)}</span>`) +
-    kv('المصدر', SRC[it.source] || esc(it.source)) +
+    kv('المصدر', srcName(it.source)) +
     // #62: الاسم العربي للعرض، والاسم الأصلي من إيميل البنك تحته كدليل.
     (it.name_ar ? kv('المحل', esc(it.name_ar)) + kv('في البنك', esc(it.note)) : kv('الملاحظة', esc(it.note || '—'))) + itemActions(it));
 }
@@ -490,12 +499,17 @@ function itemActions(it) {
 }
 function pickCategory(id) {
   const it = byId[id]; if (!it) return;
-  const names = Object.keys(ICON).filter((c) => c !== 'دخل ATM');
+  // الثابتة الأول، وبعدها أي تصنيف مصروف جديد شايفاه الصفحة. والباب هو اللي بيحكم في الآخر.
+  const seen = Object.values(byId).filter((i) => i.kind !== 'income').map((i) => i.category).concat(catBudgets.map((b) => b.category));
+  const names = [...new Set(Object.keys(ICON).filter((c) => c !== 'دخل ATM').concat(seen))].filter(Boolean);
   openSheet(`<div class="shhd">🏷️<b>اختار التصنيف</b></div><div class="cats">` +
     names.map((c) => `<button data-act="setcat" data-v="${it.id}" data-c="${esc(c)}" class="${c === it.category ? 'on' : ''}">${label(c)}</button>`).join('') + `</div>`);
 }
 const RESULT = { changed: '✅ اتعمل', same: '👌 مفيش تغيير', locked: '🔒 الحركة نزلت الملف خلاص، فالتصليح برسالة لكلود', missing: '⚠️ الحركة مش موجودة', bad: '⚠️ التصنيف ده ما ينفعش هنا' };
+let busy = false;
 async function doWrite(body) {
+  if (busy) return;
+  busy = true;
   sheet.querySelectorAll('button').forEach((b) => { b.disabled = true; });
   let msg;
   try {
@@ -504,11 +518,13 @@ async function doWrite(body) {
     if (!r.ok) throw new Error('في عطل في الاتصال. جرّب تاني.');
     const res = (await r.json()).result;
     msg = RESULT[res] || '⚠️ رد غريب من الباب';
+    // أي رد من الباب معناه إن الحالة اتغيّرت أو اتعرفت، فالكاش القديم بيتشال.
+    Object.keys(cache).forEach((k) => delete cache[k]);
     if (res === 'changed') {
-      Object.keys(cache).forEach((k) => delete cache[k]);
       if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     }
   } catch (e) { msg = '⚠️ ' + e.message; }
+  busy = false;
   openSheet(`<div class="toast">${esc(msg)}</div>`);
   show();
 }
@@ -526,7 +542,7 @@ function goBack() {
 }
 
 // تبويب «الأوامر»: نظرة سريعة. كارت مقفول فيه الحالة والعنوان والنتيجة و«👣 الجاي»،
-// ورسالة مصطفى والأوقات بتفتح لما يدوس (اختيار مصطفى ١، 2026-10-28).
+// والرسالة والأوقات بتفتح لما يدوس (اختيار ١، 2026-10-28).
 function ago(ts) {
   const m = Math.max(0, Math.round((Date.now() / 1000 - Number(ts)) / 60));
   if (m < 1) return 'دلوقتي';
@@ -537,7 +553,7 @@ function ago(ts) {
   return d === 1 ? 'من يوم' : d === 2 ? 'من يومين' : `من ${d} أيام`;
 }
 const firstWords = (s) => String(s ?? '').trim().replace(/^\.\s*/, '').split(/\s+/).slice(0, 3).join(' ');
-// الرقمين فوق فلاتر: دوسة توري نوع واحد، والدوسة التانية على نفس الرقم ترجّع الكل (اختيار مصطفى ١، 2026-10-28).
+// الرقمين فوق فلاتر: دوسة توري نوع واحد، والدوسة التانية على نفس الرقم ترجّع الكل (اختيار ١، 2026-10-28).
 let cmdFilter = null;
 function renderCommands(list) {
   if (!list.length) return app.innerHTML = '<div class="msg">مفيش أوامر لسه. ابعت للبوت سطر أوله نقطة.</div>';
@@ -570,19 +586,24 @@ function renderCommands(list) {
 
 async function post(body) {
   const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, ...body }) });
-  if (!r.ok) throw new Error(`مش مسموح (${r.status}).`);
+  if (r.status === 401 || r.status === 403) throw Object.assign(new Error('مش مسموح. اقفل اللوحة وافتحها تاني من زرار البوت.'), { shown: true });
+  if (!r.ok) throw Object.assign(new Error(`في عطل في السيرفر (${r.status}). جرّب تاني بعد شوية.`), { shown: true });
   return r.json();
 }
+// كل شاشة بتترسم من رد واحد بس، فالأرقام اللي فيها من نفس اللحظة. والرد بيتصدّق لمدة دقيقتين.
+const FRESH_MS = 120000;
+const okMonth = (m) => m && /^\d{4}-\d{2}$/.test(m.month);
+function useMeta(d) {
+  months = Array.isArray(d.months) ? d.months.filter(okMonth) : [];
+  budget = Number(d.budget) || 0;
+  catBudgets = Array.isArray(d.cat_budgets) ? d.cat_budgets : [];
+  cancelled = Array.isArray(d.cancelled) ? d.cancelled : [];
+  accounts = d.accounts || null;
+}
 async function getData(period) {
-  if (!cache[period]) {
-    cache[period] = await post({ period });
-    if (Array.isArray(cache[period].months)) months = cache[period].months;
-    if (cache[period].budget != null) budget = Number(cache[period].budget) || 0;
-    if (Array.isArray(cache[period].cat_budgets)) catBudgets = cache[period].cat_budgets;
-    if (Array.isArray(cache[period].cancelled)) cancelled = cache[period].cancelled;
-    if (cache[period].accounts) accounts = cache[period].accounts;
-  }
-  return cache[period];
+  const c = cache[period];
+  if (!c || Date.now() - c.at > FRESH_MS) cache[period] = { at: Date.now(), d: await post({ period }) };
+  return cache[period].d;
 }
 async function show() {
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.view));
@@ -598,12 +619,13 @@ async function show() {
     }
     const d = await getData(S.view === 'reports' ? 'month' : S.period);
     if (my !== seq) return;
+    useMeta(d);
     byId = {};
     if (S.view === 'reports') renderReports(d);
     else if (S.view === 'stats') S.cat ? renderCat(d) : renderStats(d);
     else renderTx(d);
   } catch (e) {
-    if (my === seq) app.innerHTML = `<div class="msg">${esc(e.message.startsWith('مش') ? e.message : 'في عطل في الاتصال. جرّب تاني.')}</div>`;
+    if (my === seq) app.innerHTML = `<div class="msg">${esc(e.shown ? e.message : 'في عطل في الاتصال. جرّب تاني.')}</div>`;
   }
 }
 
@@ -622,7 +644,7 @@ app.addEventListener('click', (e) => {
     case 'sec':
       open[v] = !open[v];
       if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-      return cache.month ? renderReports(cache.month) : show();
+      return show();
     case 'item': return openItem(v);
     case 'day': return openDay(v);
     case 'page': return app.querySelector('.pager').children[Number(v)].scrollIntoView({ inline: 'start', block: 'nearest', behavior: 'smooth' });
@@ -643,8 +665,9 @@ sheet.addEventListener('click', (e) => {
     case 'pickcat': return pickCategory(v);
     case 'setcat': return doWrite({ action: 'category', id: Number(v), category: t.dataset.c });
     // الإلغاء بدوستين: الأولى بتقلب الزرار «اضغط تاني للتأكيد»، والتانية بتلغي.
-    case 'cancel1': t.dataset.act = 'cancel2'; t.className = 'sure'; t.textContent = 'اضغط تاني للتأكيد'; return;
-    case 'cancel2': return doWrite({ action: 'cancel', id: Number(v) });
+    // والتانية ما بتتحسبش لو جت قبل نص ثانية، عشان اللمسة المزدوجة ما تلغيش من غير قصد.
+    case 'cancel1': t.dataset.act = 'cancel2'; t.dataset.at = Date.now(); t.className = 'sure'; t.textContent = 'اضغط تاني للتأكيد'; return;
+    case 'cancel2': if (Date.now() - Number(t.dataset.at) < 500) return; return doWrite({ action: 'cancel', id: Number(v) });
     case 'restore': return doWrite({ action: 'restore', id: Number(v) });
   }
 });
