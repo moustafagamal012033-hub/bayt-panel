@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-PjDYo/6e637UneZZ9O3itUOQ7FDYqbJ5vDPCpGnDm1I='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-b7A8VQ/YcmINSjcJvW6QYq5yZM9jyGZIome1ko6crcU='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>لوحة الفلوس</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -369,7 +369,9 @@ const signed = (n) => (Number(n) < 0 ? '−' : '') + fmt(Math.abs(Number(n)));
 const sign = (it) => (it.kind === 'expense' ? '−' : '+');
 const dayTotal = (n) => (Number(n) < 0 ? '+' + fmt(-Number(n)) : fmt(n));
 // نسبة آمنة: من غير Infinity ولا NaN لو المجموع صفر أو بالسالب.
-const pct = (part, whole) => (whole > 0 ? Math.round(Math.max(0, part) / whole * 100) : 0);
+const pct = (part, whole) => (whole > 0 ? Math.min(100, Math.round(Math.max(0, part) / whole * 100)) : 0);
+// مهمة ٢٣: مقام النسب مجموع الموجب بس، عشان المرتجع ما يكبّرش نسبة الباقي (100 أكل ومرتجع 80 كانت 500%).
+const posSum = (arr, f) => arr.reduce((a, x) => a + Math.max(0, Number(f(x)) || 0), 0);
 function daily(l) {
   if (!l || !l.day) return '';
   const day = `<span class="ltr">${esc(l.day)}</span>`;
@@ -383,10 +385,11 @@ const SRC = { bot_manual: '🤖 البوت', atm_cycle: '💹 ATM' };
 const srcName = (s) => SRC[s] || (String(s).startsWith('email_') ? '📧 البنك' : esc(s));
 const KIND = { expense: 'نفقة', income: 'دخل', refund: 'مرتجع' };
 function donut(cats, total, col) {
-  if (!total) return '';
+  const pos = posSum(cats, (c) => c.total);
+  if (!total || !pos) return '';
   let a = 0, paths = '';
   cats.forEach((c, i) => {
-    const f = Math.max(0, c.total) / total; if (!f) return;
+    const f = Math.max(0, c.total) / pos; if (!f) return;
     const a2 = a + f * 2 * Math.PI, large = f > 0.5 ? 1 : 0;
     const p = (t) => [70 + 60 * Math.sin(t), 70 - 60 * Math.cos(t)];
     const [x1, y1] = p(a), [x2, y2] = p(a2 - 1e-6);
@@ -399,6 +402,7 @@ function donut(cats, total, col) {
 // الحالة كلها في مكان واحد: التبويب، والفترة، ونفقات ولا دخل، وقايمة ولا تقويم، والتصنيف المفتوح.
 const S = { view: 'tx', period: 'month', kind: 'expense', mode: 'list', cat: null, catColor: '', sort: 'date', page: 0 };
 const cache = {};
+let cacheGen = 0; // مهمة ٢٣: أي كتابة بتزوّده، والرد اللي اتطلب قبلها ما بيدخلش الكاش
 let months = [], byId = {}, seq = 0, budget = 0, catBudgets = [], cancelled = [], accounts = null;
 // أقسام التقارير: الإحصائيات مفتوحة من الأول، والحسابات مقفولة لحد أول دوسة (#60).
 const open = { stats: true, accounts: false };
@@ -445,8 +449,8 @@ function ring(st, sub, stroke) {
   const R = 46, C = 2 * Math.PI * R, t = (st.today / st.days) * 2 * Math.PI;
   const tick = st.isCur ? `<line x1="${56 + 36 * Math.sin(t)}" y1="${56 - 36 * Math.cos(t)}" x2="${56 + 56 * Math.sin(t)}" y2="${56 - 56 * Math.cos(t)}" stroke="var(--ink)" stroke-width="2.5"/>` : '';
   return `<svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" stroke="var(--line)" stroke-width="11" fill="none"/>
-    <circle cx="56" cy="56" r="${R}" stroke="${stroke || st.col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.min(st.f, 1) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
-    <text x="56" y="${sub ? 58 : 63}" text-anchor="middle" font-size="${sub ? 18 : 24}" font-weight="700" fill="${st.col}">${Math.round(st.f * 100)}%</text>` +
+    <circle cx="56" cy="56" r="${R}" stroke="${stroke || st.col}" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="${(Math.max(0, Math.min(st.f, 1)) * C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 56 56)"/>${tick}
+    <text x="56" y="${sub ? 58 : 63}" text-anchor="middle" font-size="${sub ? 18 : 24}" font-weight="700" fill="${st.col}">${Math.max(0, Math.round(st.f * 100))}%</text>` +
     (sub ? `<text x="56" y="75" text-anchor="middle" font-size="11" fill="var(--muted)">${st.over ? 'اتجاوزت' : 'اتصرف'}</text>` : '') + `</svg>`;
 }
 function budgetCard(spent, ym, amount = budget, title = `💰 ميزانية ${ym && monthName(ym)}`, ringCol) {
@@ -468,7 +472,8 @@ function catBudgetsCard(d, ym) {
   if (!catBudgets.length || !ym) return '';
   const spent = {};
   (d.by_category || []).forEach((c) => { spent[c.category] = Number(c.total); });
-  return `<div class="card"><h4 class="bud-t">🗂️ ميزانية التصنيفات</h4><div class="cbs">` + catBudgets.map((b) => {
+  // مهمة ٢٣: ميزانية بصفر أو فاضية ما بتترسمش (كانت بتطبع NaN%).
+  return `<div class="card"><h4 class="bud-t">🗂️ ميزانية التصنيفات</h4><div class="cbs">` + catBudgets.filter((b) => Number(b.amount) > 0).map((b) => {
     const s = b.category === OTHER ? (d.by_category || []).reduce((a, c) => a + (inOther(c.category) ? Number(c.total) : 0), 0) : spent[b.category] || 0;
     const st = budgetState(s, Number(b.amount), ym);
     return `<div class="cb tap" data-act="bcat" data-v="${esc(b.category)}" data-c="${color(b.category, false)}">${ring(st, false, color(b.category, false))}
@@ -553,7 +558,7 @@ function catsOf(d) {
   return Object.values(g).sort((a, b) => b.total - a.total);
 }
 function renderStats(d) {
-  const cats = catsOf(d), total = cats.reduce((a, c) => a + Number(c.total), 0), inc = S.kind === 'income';
+  const cats = catsOf(d), total = cats.reduce((a, c) => a + Number(c.total), 0), pos = posSum(cats, (c) => c.total), inc = S.kind === 'income';
   let h = chips() + seg('kind', [['expense', '💸 نفقات'], ['income', '💰 دخل']], S.kind);
   if (!cats.length) return app.innerHTML = h + `<div class="msg">مفيش ${S.kind === 'income' ? 'دخل' : 'نفقات'} في الفترة دي.</div>`;
   const perDay = {};
@@ -566,14 +571,14 @@ function renderStats(d) {
   const pts = series(d, isKind);
   h += `<div class="card"><div class="pager">
     <div class="page donut">${donut(cats, total, (c) => color(c.category, inc))}<div class="legend">` +
-      cats.map((c) => `<div><span><i class="dot" style="background:${color(c.category, inc)}"></i>${label(c.category)}</span><b>${pct(c.total, total)}%</b></div>`).join('') + `</div></div>
+      cats.map((c) => `<div><span><i class="dot" style="background:${color(c.category, inc)}"></i>${label(c.category)}</span><b>${pct(c.total, pos)}%</b></div>`).join('') + `</div></div>
     <div class="page donut">${donut(topCats, total, (c, i) => dayColor(i))}<div class="legend"><div><small style="color:var(--muted)">أكبر الأيام</small></div>` +
       topCats.map((c, i) => `<div><span><i class="dot" style="background:${dayColor(i)}"></i>${c.category === 'أخرى' ? 'أيام تانية' : dayName(c.category)}</span><b>${fmt(c.total)}</b></div>`).join('') + `</div></div>
     <div class="page">${line(pts, col)}${sumAvg(pts)}</div>
   </div><div class="dots">${[0, 1, 2].map((i) => `<i data-act="page" data-v="${i}" class="tap${S.page === i ? ' on' : ''}"></i>`).join('')}</div></div>`;
   h += `<div class="card">` + cats.map((c) => `<div class="bar tap" data-act="cat" data-v="${esc(c.category)}" data-c="${color(c.category, inc)}">
       <div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${total > 0 ? Math.max(2, pct(c.total, total)) : 0}%;background:${color(c.category, inc)}"></div></div></div>`).join('') + `</div>`;
+      <div class="track"><div class="fill" style="width:${pos > 0 ? Math.max(2, pct(c.total, pos)) : 0}%;background:${color(c.category, inc)}"></div></div></div>`).join('') + `</div>`;
   app.innerHTML = h;
   const pager = app.querySelector('.pager');
   if (S.page) pager.children[S.page].scrollIntoView({ inline: 'start', block: 'nearest' });
@@ -587,7 +592,7 @@ function renderStats(d) {
 function renderCat(d) {
   const group = S.group && S.cat === OTHER && S.kind === 'expense';
   const pred = (i) => isKind(i) && (group ? inOther(i.category) : i.category === S.cat);
-  const items = flat(d).filter(pred), total = items.reduce((a, i) => a + val(i), 0);
+  const items = flat(d).filter(pred), total = items.reduce((a, i) => a + val(i), 0), pos = posSum(items, val);
   const pts = series(d, pred);
   const sorted = items.slice().sort(S.sort === 'amount' ? (a, b) => val(b) - val(a) : (a, b) => (b.day + b.time).localeCompare(a.day + a.time));
   const cb = S.kind === 'expense' && (S.cat !== OTHER || group) && catBudgets.find((b) => b.category === S.cat);
@@ -595,15 +600,15 @@ function renderCat(d) {
   if (group) items.forEach((i) => { const p = parts[i.category] = parts[i.category] || { category: i.category, total: 0, count: 0 }; p.total += val(i); p.count++; });
   const inner = !group ? '' : `<div class="card"><div class="note">جوّه «أخرى»: كل تصنيف مالوش ميزانية لوحده</div>` +
     Object.values(parts).sort((a, b) => b.total - a.total).map((c) => `<div class="bar"><div class="row"><span>${label(c.category)} <small>(${c.count})</small></span><b>${fmt(c.total)}</b></div>
-      <div class="track"><div class="fill" style="width:${total > 0 ? Math.max(2, pct(c.total, total)) : 0}%;background:${color(c.category, false)}"></div></div></div>`).join('') + `</div>`;
+      <div class="track"><div class="fill" style="width:${pos > 0 ? Math.max(2, pct(c.total, pos)) : 0}%;background:${color(c.category, false)}"></div></div></div>`).join('') + `</div>`;
   app.innerHTML = `<div class="back tap" data-act="back"><span>→</span>${label(S.cat)}</div>` +
     (cb ? budgetCard(total, periodMonth(), Number(cb.amount), `💰 ميزانية ${label(S.cat)}`, S.catColor) : '') +
     inner + `<div class="card">${line(pts, S.catColor)}${sumAvg(pts)}</div>` +
     seg('sort', [['date', '🗓️ فرز بالتاريخ'], ['amount', '💵 فرز بالمبلغ']], S.sort) +
     (!sorted.length ? '<div class="msg">مفيش حركات في التصنيف ده في الفترة دي.</div>' : `<div class="card">` + sorted.map((it) => `<div class="bar tap" data-act="item" data-v="${it.id}">
       <div class="row"><span>${esc(it.name_ar || it.note || it.category)}</span><b class="ltr">${it.kind === 'refund' ? '+' : ''}${fmt(it.amount)}</b></div>
-      <div class="track"><div class="fill" style="width:${total > 0 ? Math.max(2, pct(val(it), total)) : 0}%;background:${S.catColor}"></div></div>
-      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span>${group ? ' · ' + label(it.category) : ''}</span><span class="ltr">${pct(val(it), total)}%</span></div></div>`).join('') + `</div>`);
+      <div class="track"><div class="fill" style="width:${pos > 0 ? Math.max(2, pct(val(it), pos)) : 0}%;background:${S.catColor}"></div></div>
+      <div class="row" style="color:var(--muted);font-size:12px;margin-top:3px"><span>${dayName(it.day)} · <span class="ltr">${esc(it.time)}</span>${group ? ' · ' + label(it.category) : ''}</span><span class="ltr">${pct(val(it), pos)}%</span></div></div>`).join('') + `</div>`);
 }
 
 // 📑 التقارير زي التطبيق: «إحصائيات الشهر» و«الحسابات» زرارين، كل دوسة بتفتح الكارت كله أو تقفله
@@ -668,7 +673,7 @@ function pickCategory(id) {
   const it = byId[id]; if (!it) return;
   // الثابتة الأول، وبعدها أي تصنيف مصروف جديد شايفاه الصفحة. والباب هو اللي بيحكم في الآخر.
   const seen = Object.values(byId).filter((i) => i.kind !== 'income').map((i) => i.category).concat(catBudgets.map((b) => b.category));
-  const names = [...new Set(Object.keys(ICON).filter((c) => c !== 'دخل ATM').concat(seen))].filter(Boolean);
+  const names = [...new Set(Object.keys(ICON).filter((c) => c !== 'دخل ATM').concat(seen))].filter((c) => c && c !== '❓'); // الباب بيرفض ❓
   openSheet(`<div class="shhd">🏷️<b>اختار التصنيف</b></div><div class="cats">` +
     names.map((c) => `<button data-act="setcat" data-v="${it.id}" data-c="${esc(c)}" class="${c === it.category ? 'on' : ''}">${label(c)}</button>`).join('') + `</div>`);
 }
@@ -680,24 +685,34 @@ async function doWrite(body) {
   sheet.querySelectorAll('button').forEach((b) => { b.disabled = true; });
   let msg;
   try {
-    const r = await fetch(WRITE, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, ...body }) });
+    // مهمة ٢٣: مهلة 15 ثانية، والشبكة لو وقعت بتتقال بالعربي، لأن الكتابة ممكن تكون وصلت الباب.
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 15000);
+    let r;
+    try { r = await fetch(WRITE, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, ...body }), signal: ctl.signal }); }
+    catch { throw new Error('الاتصال وقع قبل ما الرد يوصل. الحركة ممكن تكون اتعملت أو لأ، فبص عليها في القايمة.'); }
+    finally { clearTimeout(timer); }
     if (r.status === 401) throw new Error('مش قادر أتأكد إنه إنت. اقفل اللوحة وافتحها تاني من زرار البوت.');
     if (!r.ok) throw new Error('في عطل في الاتصال. جرّب تاني.');
     const res = (await r.json()).result;
     msg = RESULT[res] || '⚠️ رد غريب من الباب';
-    // أي رد من الباب معناه إن الحالة اتغيّرت أو اتعرفت، فالكاش القديم بيتشال.
-    Object.keys(cache).forEach((k) => delete cache[k]);
     if (res === 'changed') {
       if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
     }
   } catch (e) { msg = '⚠️ ' + e.message; }
+  // أي محاولة كتابة، حتى لو الشبكة وقعت، ممكن تكون غيّرت الحالة، فالكاش كله بيتشال وأي رد قديم جاي في السكة بيتساب.
+  cacheGen++;
+  Object.keys(cache).forEach((k) => delete cache[k]);
   busy = false;
   openSheet(`<div class="toast">${esc(msg)}</div>`);
   show();
 }
 function openDay(day) {
-  const list = Object.values(byId).filter((i) => i.day === day).sort((a, b) => b.time.localeCompare(a.time));
-  openSheet(`<div class="shhd">📅<b>${dayName(day)}</b></div>` + list.map((it) => itemRow(it, `<span class="ltr">${esc(it.time)}</span>`)).join(''));
+  const list = Object.values(byId).filter((i) => i.day === day).sort((a, b) => !!a.cancelled - !!b.cancelled || b.time.localeCompare(a.time));
+  // مهمة ٢٣: الملغي من اللوحة بيبان باهت ومشطوب زي كارت «اتلغت»، عشان ما يتقريش كأنه محسوب.
+  openSheet(`<div class="shhd">📅<b>${dayName(day)}</b></div>` + list.map((it) => {
+    const row = itemRow(it, `<span class="ltr">${esc(it.time)}</span>`);
+    return it.cancelled ? row.replace('class="item tap"', 'class="item tap cx"') : row;
+  }).join(''));
 }
 function backBtn() {
   if (!tg || !tg.BackButton) return;
@@ -1109,8 +1124,10 @@ function useMeta(d) {
 }
 async function getData(period) {
   const c = cache[period];
-  if (!c || Date.now() - c.at > FRESH_MS) cache[period] = { at: Date.now(), d: await post({ period }) };
-  return cache[period].d;
+  if (c && Date.now() - c.at <= FRESH_MS) return c.d;
+  const g = cacheGen, d = await post({ period });
+  if (g === cacheGen) cache[period] = { at: Date.now(), d };
+  return d;
 }
 async function show() {
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b.dataset.v === S.view));
@@ -1182,7 +1199,9 @@ sheet.addEventListener('click', (e) => {
     // والتانية ما بتتحسبش لو جت قبل نص ثانية، عشان اللمسة المزدوجة ما تلغيش من غير قصد.
     case 'cancel1': t.dataset.act = 'cancel2'; t.dataset.at = Date.now(); t.className = 'sure'; t.textContent = 'اضغط تاني للتأكيد'; return;
     case 'cancel2': if (Date.now() - Number(t.dataset.at) < 500) return; return doWrite({ action: 'cancel', id: Number(v) });
-    case 'restore': return doWrite({ action: 'restore', id: Number(v) });
+    // مهمة ٢٣: الترجيع كتابة زي الإلغاء، فبدوستين وبنفس مهلة نص الثانية.
+    case 'restore': t.dataset.act = 'restore2'; t.dataset.at = Date.now(); t.className = 'sure'; t.textContent = 'اضغط تاني للتأكيد'; return;
+    case 'restore2': if (Date.now() - Number(t.dataset.at) < 500) return; return doWrite({ action: 'restore', id: Number(v) });
   }
 });
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
