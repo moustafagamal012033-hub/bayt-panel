@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-G9HnB6pPKjH8AKFaIEqiHA5ojyAo0a4STfhQsoOs8lM='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://telegram.org 'sha256-PjDYo/6e637UneZZ9O3itUOQ7FDYqbJ5vDPCpGnDm1I='; style-src 'unsafe-inline'; connect-src https://rsvsuwwzlhnxghyqfyzk.supabase.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>لوحة الفلوس</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -156,6 +156,172 @@
   .acc div b { display:block; font-size:15px; }
   .acc small { color:var(--muted); font-size:12px; }
   .acc > b { font-size:16px; }
+  /* تبويب «الأسبوع» (2026-11-05): شكل النسخة المدمجة من نظام التصميم، ومحبوس كله جوّه .wk عشان ما يلمسش تبويبات الفلوس. */
+  .wk { --ground:#fbf9f4; --card:#ffffff; --ink:#1c2541; --ink-soft:#4a5370; --frame:#5b6886; --hairline:rgba(91,104,134,.22); --track:#eef0f5; --highlight:#9c5a00; --concept-fill:#e7f5ff; --concept-border:#a5d8ff; --solution-fill:#ebfbee; --solution-border:#b2f2bb; --warning-fill:#fff5f5; --warning-border:#ffc9c9; --question-fill:#f3f0ff; --question-border:#d0bfff; --badge-fill:#fff9db; --ok:#2b8a3e; --mid:#b26a00; --bad:#c92a2a; --ghost:#c3c9d8; --s1:8px; --s2:16px; --s3:24px; --s4:32px; --r-card:16px; --r-pill:999px; --stroke:2px; --f-head:"Noto Kufi Arabic","IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif; --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,sans-serif; --f-emoji:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji"; --ease:cubic-bezier(.2,.7,.2,1); }
+  @media (prefers-color-scheme: dark) { .wk { --ground:#10172a; --card:#172036; --ink:#e9edf6; --ink-soft:#a9b2c8; --frame:#7a87a6; --hairline:rgba(169,178,200,.16); --track:#222c45; --highlight:#f0b04a; --concept-fill:#1a2c45; --concept-border:#3d6a99; --solution-fill:#16322a; --solution-border:#2f7a4a; --warning-fill:#3a1f27; --warning-border:#8a3a46; --question-fill:#272448; --question-border:#5b4fa0; --badge-fill:#3a3218; --ok:#51cf66; --mid:#fcc419; --bad:#ff8787; --ghost:#46506b; } }
+  .wk { color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.6; max-width:860px; margin:0 auto; }
+  .wk button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; text-align:inherit; }
+  /* تصفير اللي جاي من تنسيق الفلوس بنفس الأسامي. */
+  .wk .card { margin:0; } .wk .kpi { text-align:start; } .wk .bar { margin:0; } .wk .note { text-align:start; }
+  .wk .chips { margin:0; overflow:visible; } .wk .chips button { flex:none; border:0; background:none; }
+  .wk .task.lock { margin:0; padding:9px 0; border-radius:0; background:none; color:inherit; font-size:inherit; line-height:inherit; }
+  .wk .top { display:block; } .wk .top .title { font-size:20px; }
+  .wk button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+  .wk button:focus-visible{outline:2px solid var(--highlight);outline-offset:2px;border-radius:10px}
+  .wk .emo{font-family:var(--f-emoji);font-style:normal}
+  .wk .num{font-variant-numeric:tabular-nums}
+  .wk .wrap{max-width:860px;margin:0 auto;padding:var(--s2) var(--s2) 40px}
+  .wk .top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--s1)}
+  .wk .title{font-family:var(--f-head);font-weight:700;font-size:22px;line-height:1.5;margin:0}
+  .wk .sub{color:var(--ink-soft);font-size:13px;margin:0}
+  .wk .iconbtn{width:36px;height:36px;border-radius:50%;border:var(--stroke) solid var(--hairline);display:grid;place-items:center;flex:none;background:var(--card)}
+  .wk .iconbtn svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .wk .sample{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:2px 10px;border-radius:var(--r-pill);
+    background:var(--badge-fill);border:1.5px solid var(--frame);font-size:12px;font-weight:600}
+  .wk .seg{display:flex;gap:4px;margin:var(--s2) 0;padding:4px;border-radius:var(--r-card);background:var(--card);border:var(--stroke) solid var(--frame)}
+  .wk .seg button{flex:1;padding:8px 6px;border-radius:12px;font-size:13px;font-weight:600;color:var(--ink-soft);text-align:center;transition:background .25s var(--ease),color .25s}
+  .wk .seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+  .wk .seg small{display:block;font-weight:500;font-size:11px;opacity:.85}
+  .wk .grid{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+  .wk .card,.wk .grid>*{min-width:0}
+  .wk .card{background:var(--card);border:var(--stroke) solid var(--frame);border-radius:var(--r-card);padding:var(--s2)}
+  .wk .h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s1);margin:0 0 10px}
+  .wk .h h2{font-family:var(--f-head);font-weight:700;font-size:16px;line-height:1.5;margin:0}
+  .wk .h .aside{font-size:12px;color:var(--ink-soft);white-space:nowrap}
+  .wk .hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--s2);align-items:center}
+  .wk .ring{width:118px;height:118px;position:relative;flex:none}
+  .wk .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .wk .ring .t{fill:none;stroke:var(--track);stroke-width:10}
+  .wk .ring .g{fill:none;stroke:var(--ghost);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .9s var(--ease)}
+  .wk .ring .v{fill:none;stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .9s var(--ease),stroke .4s}
+  .wk .ring .c{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+  .wk .ring .p{font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2}
+  .wk .ring .l{font-size:11px;color:var(--ink-soft)}
+  .wk .hero .lead{font-size:15px;font-weight:600;margin:0 0 6px}
+  .wk .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .wk .kpi{border:1.5px solid var(--hairline);border-radius:12px;padding:8px}
+  .wk .kpi .k{font-size:11.5px;color:var(--ink-soft);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wk .kpi .n{font-family:var(--f-head);font-weight:700;font-size:20px;line-height:1.4}
+  .wk .kpi .cmp{display:block;height:4px;border-radius:4px;background:var(--track);margin-top:4px;position:relative;overflow:hidden}
+  .wk .kpi .cmp i{position:absolute;inset-block:0;right:0;border-radius:4px;background:var(--ink);transition:width .8s var(--ease)}
+  .wk .kpi .cmp b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--frame)}
+  .wk .delta{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;white-space:nowrap;direction:rtl}
+  .wk .delta svg{width:10px;height:10px}
+  .wk .delta.up{color:var(--ok)}
+  .wk .delta.down{color:var(--bad)}
+  .wk .delta.flat,.wk .delta.na{color:var(--ink-soft)}
+  .wk .delta.up svg path,.wk .delta.down svg path{fill:currentColor}
+  .wk .vs{font-size:12px;color:var(--ink-soft)}
+  .wk .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:120px;padding-top:6px}
+  .wk .day{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .wk .stack{width:100%;max-width:30px;display:flex;flex-direction:column-reverse;gap:2px;position:relative;height:80px;justify-content:flex-start}
+  .wk .stack .blk{height:0;border-radius:5px;transition:height .7s var(--ease)}
+  .wk .stack .blk.d{background:var(--ink)}
+  .wk .stack .blk.u{background:transparent;border:1.5px dashed var(--frame)}
+  .wk .stack .prev{position:absolute;left:-3px;right:-3px;height:2px;background:var(--highlight);border-radius:2px;transition:bottom .7s var(--ease)}
+  .wk .day .dl{font-size:11px;color:var(--ink-soft);white-space:nowrap}
+  .wk .day .dc{font-size:11px;font-weight:600}
+  .wk .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11.5px;color:var(--ink-soft)}
+  .wk .legend span{display:inline-flex;align-items:center;gap:5px}
+  .wk .sw{width:12px;height:10px;border-radius:3px;display:inline-block}
+  .wk .plan{border-color:var(--frame)}
+  .wk .pi{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:start;padding:10px 0;border-top:1.5px solid var(--hairline);width:100%}
+  .wk .pi:first-of-type{border-top:0;padding-top:2px}
+  .wk .seal{width:32px;height:32px;border-radius:50%;background:var(--badge-fill);border:var(--stroke) solid var(--frame);display:grid;place-items:center;
+    font-family:var(--f-head);font-weight:700;font-size:14px;line-height:1}
+  .wk .pi .pt{font-weight:600;font-size:14.5px;margin:0}
+  .wk .pi .pd{font-size:13px;color:var(--ink-soft);margin:2px 0 0}
+  .wk .pi .go{font-size:12px;color:var(--ink-soft);align-self:center;border:1.5px solid var(--hairline);border-radius:var(--r-pill);padding:2px 9px;white-space:nowrap}
+  .wk .tag{display:inline-block;padding:0 7px;border-radius:var(--r-pill);font-size:11.5px;font-weight:600;border:1.5px solid transparent;line-height:1.7;vertical-align:1px}
+  .wk .tag.ok{background:var(--solution-fill);border-color:var(--solution-border)}
+  .wk .tag.mid{background:var(--badge-fill);border-color:var(--mid)}
+  .wk .tag.bad{background:var(--warning-fill);border-color:var(--warning-border)}
+  .wk .tag.none{background:var(--track);border-color:var(--hairline);color:var(--ink-soft)}
+  .wk .rows{display:flex;flex-direction:column}
+  .wk .row{display:grid;grid-template-columns:20px minmax(0,1fr) 96px 52px;gap:8px;align-items:center;padding:9px 6px;border-radius:12px;width:100%;
+    border-top:1.5px solid var(--hairline);transition:background .2s}
+  .wk .row:first-child{border-top-color:transparent}
+  .wk .row:hover{background:var(--track)}
+  .wk .row[aria-pressed="true"]{background:var(--concept-fill);border-top-color:transparent;box-shadow:inset 0 0 0 1.5px var(--concept-border)}
+  .wk .row[aria-pressed="true"] + .row{border-top-color:transparent}
+  .wk .rk{font-size:11px;color:var(--ink-soft);text-align:center}
+  .wk .nm{min-width:0}
+  .wk .nm b{display:block;font-weight:600;font-size:14px;line-height:1.45}
+  .wk .nm small{display:block;font-size:11.5px;color:var(--ink-soft);white-space:normal}
+  .wk .bar{height:8px;border-radius:8px;background:var(--track);position:relative;overflow:hidden}
+  .wk .bar i{position:absolute;inset-block:0;right:0;width:0;border-radius:8px;transition:width .8s var(--ease)}
+  .wk .bar b{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--ink-soft);opacity:.7;transition:right .8s var(--ease)}
+  .wk .val{text-align:left;direction:ltr;display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+  .wk .val .pc{font-weight:700;font-size:14px}
+  .wk .val .delta{font-size:11px}
+  .wk .row.zero .nm b{color:var(--ink-soft)}
+  .wk .row.zero .bar{background:repeating-linear-gradient(135deg,var(--track) 0 4px,transparent 4px 8px)}
+  .wk .c-ok,.wk .pip.c-ok{background:var(--ok)}
+  .wk .c-mid,.wk .pip.c-mid{background:var(--mid)}
+  .wk .c-bad,.wk .pip.c-bad{background:var(--bad)}
+  .wk bdi.pc{unicode-bidi:isolate;direction:ltr}
+  .wk .note{font-size:12px;color:var(--ink-soft);margin:8px 0 0}
+  .wk .goal{border:1.5px solid var(--hairline);border-radius:12px;padding:12px;width:100%;display:block;transition:border-color .2s,background .2s}
+  .wk .goal + .goal{margin-top:8px}
+  .wk .goal[aria-expanded="true"]{border-color:var(--frame)}
+  .wk .gh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .wk .gh b{font-weight:600;font-size:14.5px}
+  .wk .gm{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:6px 0;font-size:12.5px;color:var(--ink-soft)}
+  .wk .gm strong{font-family:var(--f-head);font-size:18px;color:var(--ink)}
+  .wk .pips{display:flex;gap:4px;flex-wrap:wrap}
+  .wk .pip{flex:1;min-width:14px;height:10px;border-radius:4px;background:var(--track);transition:background .4s}
+  .wk .gt{overflow:hidden;max-height:0;transition:max-height .45s var(--ease)}
+  .wk .goal[aria-expanded="true"] .gt{max-height:600px}
+  .wk .gt ul{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1.5px solid var(--hairline)}
+  .wk .gt li{display:flex;gap:8px;align-items:center;font-size:13px;padding:3px 0}
+  .wk .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .wk .chips{display:flex;gap:4px;padding:3px;border-radius:var(--r-pill);border:1.5px solid var(--hairline)}
+  .wk .chips button{padding:3px 12px;border-radius:var(--r-pill);font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .wk .chips button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+  .wk .active-f{display:none;align-items:center;gap:6px;padding:3px 6px 3px 12px;border-radius:var(--r-pill);background:var(--concept-fill);border:1.5px solid var(--concept-border);font-size:12.5px;font-weight:600}
+  .wk .active-f.on{display:inline-flex}
+  .wk .active-f button{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--card)}
+  .wk .active-f svg{width:10px;height:10px;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round}
+  .wk .tasks{list-style:none;margin:0;padding:0}
+  .wk .task{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1.5px solid var(--hairline);animation:wkfin .35s var(--ease) both}
+  .wk .task:first-child{border-top:0}
+  .wk .chk{width:22px;height:22px;border-radius:50%;border:var(--stroke) solid var(--frame);display:grid;place-items:center}
+  .wk .chk.on{background:var(--ink);border-color:var(--ink)}
+  .wk .chk svg{width:12px;height:12px;stroke:var(--card);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .wk .task .tt{font-size:14px;font-weight:500;margin:0}
+  .wk .task.dn .tt{color:var(--ink-soft)}
+  .wk .task .tm{font-size:11.5px;color:var(--ink-soft);margin:1px 0 0}
+  .wk .task .dy{font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+  .wk .task.lock .chk{border-style:dashed}
+  .wk .empty{font-size:13px;color:var(--ink-soft);padding:12px 0;text-align:center}
+  .wk .sep{font-size:11.5px;font-weight:600;color:var(--ink-soft);padding:10px 0 2px;letter-spacing:0}
+  @keyframes wkfin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .wk .foot{font-size:11.5px;color:var(--ink-soft);text-align:center;margin-top:18px}
+  @media (min-width:720px){.wk .wrap{padding:24px}
+  .wk .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+  .wk .span2{grid-column:1 / -1}
+  .wk .hero{grid-template-columns:auto 1fr}
+  .wk .ring{width:136px;height:136px}
+  
+  }
+  @media (prefers-reduced-motion: reduce){.wk *,.wk *::before,.wk *::after{transition:none !important;animation:none !important}
+  
+  }
+  .wk .hm{display:grid;grid-template-columns:62px repeat(7,minmax(0,1fr));gap:3px;align-items:stretch}
+  .wk .hm .ch{font-size:10.5px;color:var(--ink-soft);text-align:center;padding-bottom:4px;white-space:nowrap}
+  .wk .hm .ch b{display:block;font-size:11px;color:var(--ink);font-weight:600}
+  .wk .hm .rl{font-size:11.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;min-height:28px;padding:0 2px;border:0;background:none;text-align:start;cursor:pointer;font-family:inherit;line-height:1.2}
+  .wk .hm .rl.z{color:var(--ink-soft);font-weight:500}
+  .wk .hm .rl[aria-pressed="true"]{color:var(--ink);text-decoration:underline}
+  .wk .hm .c{min-height:28px;border-radius:7px;background:var(--track);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;padding:2px}
+  .wk .hm .c.e{background:transparent;border:1px dashed var(--line)}
+  .wk .hd{display:inline-block;width:8px;height:8px;border-radius:50%}
+  .wk .hd.ok{background:var(--ok)}
+  .wk .hd.todo{border:2px solid var(--ink-soft);box-sizing:border-box}
+  .wk .hnotes{display:grid;gap:6px;margin-top:10px;font-size:13px;line-height:1.6}
+  .wk .ring circle{transition:none!important}
+  .wk #taskCard.closed .tasks,.wk #taskCard.closed .filters,.wk #taskCard.closed #stChips,.wk #taskCard.closed .active-f{display:none}
+  .wk .tgl{margin-top:8px;width:100%;padding:10px;border-radius:12px;border:2px solid var(--frame);background:none;font:inherit;font-weight:600;color:var(--ink);cursor:pointer}
 </style>
 </head>
 <body>
@@ -166,6 +332,7 @@
     <button data-v="stats"><i>📊</i>الإحصائيات</button>
     <button data-v="reports"><i>📑</i>التقارير</button>
     <button data-v="commands"><i>📋</i>الأوامر</button>
+    <button data-v="week"><i>🗓️</i>الأسبوع</button>
   </div>
 </header>
 <main id="app"><div class="msg">بيحمّل…</div></main>
@@ -584,6 +751,346 @@ function renderCommands(list) {
   }));
 }
 
+// تبويب «الأسبوع» («نفّذ» مصطفى 2026-11-05): شكل النسخة المدمجة اللي اتعتمدت، والبيانات من الباب {view:'week'}.
+// المهمة المحمية جاية من القاعدة من غير عنوان، والصفحة ما بتكتبش مكانها أي عنوان، وبتتعد بس.
+// والمتكرر (العادات) مش في البيانات، باختيار مصطفى.
+const WK_DAYS = ['السبت', 'الأحد', 'الاتنين', 'التلات', 'الأربع', 'الخميس', 'الجمعة'];
+const WK_SHORT = ['سبت', 'أحد', 'اتنين', 'تلات', 'أربع', 'خميس', 'جمعة'];
+const WK_ASPECTS = ['المالي', 'المهني', 'النفسي والترويحي', 'الفكري والتطويري', 'الإيماني', 'العائلي والاجتماعي', 'الصحة', 'لما أنزل مصر', 'إدارة العلاقات'];
+const WK_SHORTNAME = { 'النفسي والترويحي': 'النفسي', 'الفكري والتطويري': 'الفكري', 'العائلي والاجتماعي': 'العائلي', 'لما أنزل مصر': 'مصر', 'إدارة العلاقات': 'العلاقات', 'من غير جانب': 'من غير' };
+const NO_ASP = 'من غير جانب', NO_PROJ = 'من غير مشروع';
+const AR_DIG = (n) => String(n).replace(/\d/g, (x) => '٠١٢٣٤٥٦٧٨٩'[x]);
+const DAY_MS = 86400000;
+const isoMs = (s) => Date.parse(String(s).slice(0, 10) + 'T00:00:00Z');
+function wkLabel(start) {
+  const a = new Date(isoMs(start)), b = new Date(isoMs(start) + 6 * DAY_MS);
+  const ma = MONTHS[a.getUTCMonth()], mb = MONTHS[b.getUTCMonth()];
+  return ma === mb ? `أسبوع ${AR_DIG(a.getUTCDate())} لـ${AR_DIG(b.getUTCDate())} ${mb}`
+    : `أسبوع ${AR_DIG(a.getUTCDate())} ${ma} لـ${AR_DIG(b.getUTCDate())} ${mb}`;
+}
+const TASKS_W = (n) => (n >= 3 && n <= 10 ? 'مهام' : 'مهمة');
+const PCB = (n) => `<bdi class="num pc" dir="ltr">${n}%</bdi>`;
+const $w = (id) => document.getElementById(id);
+const later = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
+
+let WK = null;
+const ws = { w: 0, f: null, s: 'all', openGoal: null };
+
+// تحويل رد الباب لشكل النموذج: اليوم من تاريخ day قدام أول الأسبوع (السبت)، والجوانب والمشاريع والأهداف من أساميها.
+function wkModel(raw) {
+  const okDate = (s) => /^\d{4}-\d{2}-\d{2}/.test(String(s ?? ''));
+  const weeks = (Array.isArray(raw && raw.weeks) ? raw.weeks : []).filter((w) => w && okDate(w.week_start))
+    .sort((a, b) => String(a.week_start).localeCompare(String(b.week_start)))
+    .map((w) => ({ start: String(w.week_start).slice(0, 10), label: wkLabel(w.week_start),
+      out: w.outside_program == null || isNaN(Number(w.outside_program)) ? null : Number(w.outside_program),
+      goals: Array.isArray(w.goals) ? w.goals.filter((g) => g && typeof g === 'object') : [], tasks: [] }));
+  const at = {}; weeks.forEach((w, i) => { at[w.start] = i; });
+  const aspects = [...WK_ASPECTS], projects = [], goals = [], projGoal = {}, sens = {};
+  let noAsp = false;
+  (Array.isArray(raw && raw.tasks) ? raw.tasks : []).forEach((t) => {
+    if (!t || !okDate(t.week_start)) return;
+    const i = at[String(t.week_start).slice(0, 10)]; if (i === undefined) return;
+    const hidden = t.hidden !== false;
+    const a = t.aspect && String(t.aspect).trim() && t.aspect !== NO_ASP ? String(t.aspect) : NO_ASP;
+    if (a === NO_ASP) noAsp = true; else if (!aspects.includes(a)) aspects.push(a);
+    const p = t.project && String(t.project).trim() ? String(t.project) : NO_PROJ;
+    if (!projects.includes(p)) projects.push(p);
+    if (hidden) sens[p] = true;
+    const g = t.goal && String(t.goal).trim() ? String(t.goal) : null;
+    if (g) { if (!goals.includes(g)) goals.push(g); if (!projGoal[p]) projGoal[p] = g; }
+    const di = okDate(t.day) ? Math.round((isoMs(t.day) - isoMs(t.week_start)) / DAY_MS) : -1;
+    weeks[i].tasks.push({ t: hidden ? null : String(t.title ?? ''), hidden, a, p, g, di: di >= 0 && di < 7 ? di : -1, done: t.done === true });
+  });
+  weeks.forEach((w) => w.goals.forEach((g) => { const n = String(g.name ?? g.title ?? '').trim(); if (n && !goals.includes(n)) goals.push(n); }));
+  return { weeks, aspects, noAsp, projects, goals, projGoal, sens, last: weeks.length - 1 };
+}
+
+const wkStats = (l) => { const d = l.filter((t) => t.done).length; return { done: d, total: l.length, pct: l.length ? Math.round(d * 100 / l.length) : null }; };
+function wkTasks(w, kind, id) {
+  const ts = WK.weeks[w] ? WK.weeks[w].tasks : [];
+  if (kind === 'aspect') return ts.filter((t) => t.a === id);
+  if (kind === 'project') return ts.filter((t) => t.p === id);
+  if (kind === 'goal') return ts.filter((t) => t.g === id);
+  if (kind === 'open') return ts.filter((t) => !t.done);
+  return ts;
+}
+// الهدف: لو الأسبوع فيه رقم مكتوب للهدف بيتاخد، وإلا بيتحسب من المهام المربوطة بيه.
+function goalStat(w, name) {
+  const e = (WK.weeks[w] ? WK.weeks[w].goals : []).find((g) => String(g.name ?? g.title ?? '').trim() === name);
+  if (e && Number(e.planned) > 0) {
+    const planned = Number(e.planned), done = Math.max(0, Number(e.done) || 0);
+    return { planned, done, pct: Math.round(done * 100 / planned), target: e.target ? String(e.target) : null };
+  }
+  const s = wkStats(wkTasks(w, 'goal', name));
+  return { planned: s.total, done: s.done, pct: s.pct, target: e && e.target ? String(e.target) : null };
+}
+const verdict = (p) => (p === null ? 'none' : p >= 80 ? 'ok' : p >= 50 ? 'mid' : 'bad');
+const VNAME = { ok: 'أخضر', mid: 'أصفر', bad: 'أحمر', none: 'مفيش' };
+const VCOL = { ok: 'c-ok', mid: 'c-mid', bad: 'c-bad', none: '' };
+const UP = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1.5 9 8H1z"/></svg>';
+const DN = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 8.5 1 2h8z"/></svg>';
+// better: true لو الزيادة كويسة.
+function deltaHTML(cur, prev, unit, better) {
+  if (prev === null || prev === undefined || cur === null) return '<span class="delta na">مفيش مقارنة</span>';
+  const d = cur - prev;
+  if (d === 0) return '<span class="delta flat">زي ما هو</span>';
+  const good = better ? d > 0 : d < 0;
+  return `<span class="delta ${good ? 'up' : 'down'}" aria-label="${d > 0 ? 'زيادة ' : 'نقص '}${Math.abs(d)}">${d > 0 ? UP : DN}<span class="num">${Math.abs(d)}</span>${unit || ''}</span>`;
+}
+
+function renderWeek(raw) {
+  WK = wkModel(raw);
+  if (WK.last < 0) { app.innerHTML = '<div class="msg">لسه مفيش أسبوع اترفع.</div>'; return; }
+  Object.assign(ws, { w: WK.last, f: null, s: 'all', openGoal: null });
+  app.innerHTML = `<div class="wk">
+  <div class="top"><h2 class="title">مراجعة الأسبوع</h2><p class="sub" id="wkLabel"></p></div>
+  <nav class="seg" id="weekSeg" aria-label="اختار الأسبوع"></nav>
+  <div class="grid">
+    <section class="card span2"><div class="h"><h2>الأسبوع ماشي إزاي</h2><span class="aside" id="vsNote"></span></div>
+      <div class="hero">
+        <div class="ring" aria-hidden="true"><svg viewBox="0 0 120 120"><circle class="t" cx="60" cy="60" r="52"/><circle class="g" id="ringG" cx="60" cy="60" r="40"/><circle class="v" id="ringV" cx="60" cy="60" r="52"/></svg>
+          <div class="c"><span class="p num" id="pct">0%</span><span class="l">نسبة الإنجاز</span></div></div>
+        <div><p class="lead" id="lead"></p><div id="pctDelta"></div></div>
+      </div>
+      <div class="kpis" id="kpis" style="margin-top:14px"></div></section>
+    <section class="card plan span2"><div class="h"><h2><span class="emo">🗓️</span> ٣ حاجات تتخطط الأسبوع الجاي</h2><span class="aside">طالعة من الأرقام</span></div><div id="plan"></div></section>
+    <section class="card"><div class="h"><h2>إيقاع الأيام</h2><span class="aside">من السبت للجمعة</span></div>
+      <div class="hm" id="days"></div>
+      <div class="legend"><span><i class="hd ok"></i>مهمة خلصت</span><span><i class="hd todo"></i>مهمة لسه</span><span>دوس على اسم الجانب يفلتر المهام</span></div>
+      <div class="hnotes" id="hnotes"></div></section>
+    <section class="card"><div class="h"><h2><span class="emo">🎯</span> الأهداف</h2><span class="aside">المخطط قدام اللي اتعمل</span></div>
+      <div id="goals"></div>
+      <p class="note">الحكم: أخضر من <bdi dir="ltr">80%</bdi>، وأصفر من 50 لـ<bdi dir="ltr">79%</bdi>، وأحمر تحت <bdi dir="ltr">50%</bdi>.</p></section>
+    <section class="card"><div class="h"><h2><span class="emo">🧭</span> الجوانب من الأضعف للأقوى</h2><span class="aside">٩ جوانب</span></div>
+      <div class="rows" id="aspects"></div><p class="note">الخط الرفيع جوّه الشريط مكان الأسبوع اللي فات.</p></section>
+    <section class="card"><div class="h"><h2><span class="emo">🧱</span> المشاريع</h2><span class="aside" id="projCount"></span></div><div class="rows" id="projects"></div></section>
+    <section class="card span2 closed" id="taskCard"><div class="h"><h2><span class="emo">✅</span> المهام</h2><span class="aside" id="taskCount"></span></div>
+      <div class="toolbar"><div class="chips" id="stChips"><button data-s="all" aria-pressed="true">الكل</button><button data-s="open" aria-pressed="false">لسه</button><button data-s="done" aria-pressed="false">خلصت</button></div>
+        <span class="active-f" id="activeF"><span id="activeFText"></span><button id="clearF" aria-label="شيل الفلتر"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6"/></svg></button></span></div>
+      <ul class="tasks" id="tasks"></ul><button class="tgl" id="tgl">اعرض المهام</button></section>
+  </div>
+  <p class="foot">دوس على جانب أو مشروع أو بند في الخطة عشان تفلتر المهام، ودوس على الهدف عشان تشوف مهامه.</p>
+</div>`;
+  wkRenderAll();
+}
+
+function renderSeg() {
+  $w('weekSeg').innerHTML = WK.weeks.map((w, i) => `<button data-w="${i}" aria-pressed="${i === ws.w}">${i === WK.last ? 'الأسبوع ده' : 'الأسبوع اللي فات'}<small>${esc(w.label)}</small></button>`).join('');
+}
+function renderHero() {
+  const w = ws.w, cur = wkStats(wkTasks(w)), hasPrev = w > 0, prev = hasPrev ? wkStats(wkTasks(w - 1)) : null, wk = WK.weeks[w];
+  $w('wkLabel').textContent = wk.label;
+  $w('vsNote').textContent = hasPrev ? 'مقارنة بـ' + WK.weeks[w - 1].label : 'مفيش أسبوع قبله';
+  const C1 = 2 * Math.PI * 52, C2 = 2 * Math.PI * 40, v = $w('ringV'), g = $w('ringG');
+  v.style.strokeDasharray = C1; g.style.strokeDasharray = C2;
+  v.style.stroke = 'var(--' + ({ ok: 'ok', mid: 'mid', bad: 'bad', none: 'ghost' })[verdict(cur.pct)] + ')';
+  v.style.strokeDashoffset = C1 * (1 - (cur.pct || 0) / 100);
+  g.style.strokeDashoffset = hasPrev ? C2 * (1 - (prev.pct || 0) / 100) : C2;
+  $w('pct').textContent = (cur.pct || 0) + '%';
+  $w('lead').innerHTML = `خلّصت <span class="num">${cur.done}</span> من <span class="num">${cur.total}</span> ${TASKS_W(cur.total)}، والحكم <span class="tag ${verdict(cur.pct)}">${VNAME[verdict(cur.pct)]}</span>`;
+  $w('pctDelta').innerHTML = hasPrev && prev.pct !== null
+    ? `<span class="vs">عن الأسبوع اللي فات: </span>${deltaHTML(cur.pct, prev.pct, ' نقطة', true)}<span class="vs"> · كان ${PCB(prev.pct)} (الحلقة الرفيعة)</span>`
+    : '<span class="vs">ده أول أسبوع اترفع، فمفيش مقارنة.</span>';
+  const pw = hasPrev ? WK.weeks[w - 1] : null;
+  const k = [
+    { k: 'خلصت', c: cur.done, p: prev ? prev.done : null, better: true },
+    { k: 'لسه مفتوحة', c: cur.total - cur.done, p: prev ? prev.total - prev.done : null, better: false },
+    { k: 'برّه البرنامج', c: wk.out, p: pw ? pw.out : null, better: false },
+  ];
+  $w('kpis').innerHTML = k.map((x) => {
+    const mx = Math.max(x.c || 0, x.p || 0, 1);
+    return `<div class="kpi"><span class="k">${x.k}</span><div class="n num">${x.c === null ? '—' : x.c}</div>${x.c === null ? '<span class="delta na">لسه ما اتكتبش</span>' : deltaHTML(x.c, x.p, '', x.better)}` +
+      `<span class="cmp" aria-hidden="true"><i data-w="${(x.c || 0) / mx * 100}" style="width:0"></i>${x.p !== null && x.c !== null ? `<b style="right:calc(${x.p / mx * 100}% - 1px)"></b>` : ''}</span></div>`;
+  }).join('');
+  later(() => $w('kpis') && $w('kpis').querySelectorAll('.cmp i').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
+}
+function wkAspectRows() { return WK.aspects.concat(WK.noAsp ? [NO_ASP] : []); }
+function renderDays() {
+  const ts = wkTasks(ws.w), f = ws.f;
+  let h = '<div></div>';
+  const per = WK_DAYS.map((d, i) => { const l = ts.filter((x) => x.di === i); return { n: l.length, d: l.filter((x) => x.done).length }; });
+  per.forEach((p, i) => { h += `<div class="ch">${WK_SHORT[i]}<b class="num">${p.n ? p.d + '/' + p.n : '·'}</b></div>`; });
+  wkAspectRows().forEach((a) => {
+    const row = ts.filter((x) => x.a === a), sel = f && f.kind === 'aspect' && f.id === a;
+    h += `<button class="rl${row.length ? '' : ' z'}" data-k="aspect" data-id="${esc(a)}" aria-pressed="${!!sel}">${esc(WK_SHORTNAME[a] || a.split(' ')[0])}</button>`;
+    WK_DAYS.forEach((d, i) => {
+      const c = row.filter((x) => x.di === i);
+      h += `<div class="c${c.length ? '' : ' e'}">${c.map((x) => `<i class="hd ${x.done ? 'ok' : 'todo'}"></i>`).join('')}</div>`;
+    });
+  });
+  $w('days').innerHTML = h;
+  const mx = Math.max(...per.map((p) => p.n));
+  const empty = WK_DAYS.filter((d, i) => per[i].n === 0);
+  const un = WK.aspects.filter((a) => !ts.some((x) => x.a === a));
+  $w('hnotes').innerHTML = (mx ? `<div>أتقل يوم كان <b>${WK_DAYS[per.findIndex((p) => p.n === mx)]}</b>، وفيه <span class="num">${mx}</span> ${TASKS_W(mx)}.</div>` : '') +
+    (empty.length ? `<div>أيام فاضية: ${empty.join('، ')}.</div>` : '') +
+    (un.length ? `<div>جوانب ما اتلمستش: ${un.map(esc).join('، ')}.</div>` : '<div>كل الجوانب اتلمست.</div>');
+}
+function rowHTML(kind, id, name, sub, cur, prv, rank) {
+  const v = verdict(cur.pct), sel = ws.f && ws.f.kind === kind && ws.f.id === id;
+  const marker = prv && prv.pct !== null && cur.pct !== null ? `<b style="right:calc(${prv.pct}% - 1px)"></b>` : '';
+  const dl = cur.total === 0 ? '<span class="delta na">مفيش</span>'
+    : prv === null ? '<span class="delta na">مفيش مقارنة</span>'
+    : prv.total === 0 ? '<span class="delta flat">جديد</span>' : deltaHTML(cur.pct, prv.pct, '', true);
+  return `<button class="row${cur.total === 0 ? ' zero' : ''}" data-k="${kind}" data-id="${esc(id)}" aria-pressed="${!!sel}"${cur.total === 0 ? ' disabled' : ''}>` +
+    `<span class="rk num">${rank || ''}</span><span class="nm"><b>${name}</b><small>${sub}</small></span>` +
+    `<span class="bar" aria-hidden="true"><i class="${VCOL[v]}" data-w="${cur.pct || 0}"></i>${marker}</span>` +
+    `<span class="val"><span class="pc num">${cur.pct === null ? '—' : cur.pct + '%'}</span>${dl}</span></button>`;
+}
+let aspectRank = [];
+function renderAspects() {
+  const w = ws.w;
+  const rows = WK.aspects.map((a) => ({ a, c: wkStats(wkTasks(w, 'aspect', a)), p: w > 0 ? wkStats(wkTasks(w - 1, 'aspect', a)) : null }));
+  const active = rows.filter((r) => r.c.total > 0).sort((x, y) =>
+    (x.c.pct - y.c.pct) || ((y.c.total - y.c.done) - (x.c.total - x.c.done)) || (y.c.total - x.c.total));
+  const zero = rows.filter((r) => r.c.total === 0);
+  aspectRank = active;
+  const sub = (c) => `<span class="num">${c.done}</span> من <span class="num">${c.total}</span> خلصت`;
+  let h = active.map((r, i) => rowHTML('aspect', r.a, esc(r.a), sub(r.c), r.c, r.p, i + 1)).join('') +
+    zero.map((r) => rowHTML('aspect', r.a, esc(r.a), 'ما اتلمسش الأسبوع ده', r.c, r.p, '')).join('');
+  // «من غير جانب» صف لوحده تحت، ومش داخل في ترتيب الأضعف.
+  if (WK.noAsp) {
+    const c = wkStats(wkTasks(w, 'aspect', NO_ASP)), p = w > 0 ? wkStats(wkTasks(w - 1, 'aspect', NO_ASP)) : null;
+    h += rowHTML('aspect', NO_ASP, NO_ASP, c.total ? sub(c) + ' · برّه الترتيب' : 'مفيش مهام من غير جانب', c, p, '');
+  }
+  $w('aspects').innerHTML = h;
+}
+function renderProjects() {
+  const w = ws.w;
+  const rows = WK.projects.map((p) => ({ p, c: wkStats(wkTasks(w, 'project', p)), v: w > 0 ? wkStats(wkTasks(w - 1, 'project', p)) : null }));
+  const act = rows.filter((r) => r.c.total > 0).sort((x, y) => (y.c.total - x.c.total) || (x.c.pct - y.c.pct));
+  const zero = rows.filter((r) => r.c.total === 0);
+  $w('projCount').innerHTML = `<span class="num">${act.length}</span> شغالين من <span class="num">${WK.projects.length}</span>`;
+  $w('projects').innerHTML = act.concat(zero).map((r) => {
+    const g = WK.projGoal[r.p];
+    const sub = r.c.total === 0 ? 'مفيش مهام الأسبوع ده'
+      : `<span class="num">${r.c.done}</span> من <span class="num">${r.c.total}</span>` + (g ? ` · <span class="emo">🎯</span> ${esc(g)}` : '');
+    return rowHTML('project', r.p, (WK.sens[r.p] ? '<span class="emo">🔒</span> ' : '') + esc(r.p), sub, r.c, r.v, '');
+  }).join('');
+}
+function taskMini(t) {
+  const tick = `<span class="chk${t.done ? ' on' : ''}" style="width:18px;height:18px">${t.done ? '<svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.5 9.5 3.5"/></svg>' : ''}</span>`;
+  return `<li>${tick}<span>${t.hidden ? 'مهمة محمية' : esc(t.t)}</span><span class="vs" style="margin-inline-start:auto">${t.di >= 0 ? WK_DAYS[t.di] : ''}</span></li>`;
+}
+function renderGoals() {
+  const w = ws.w;
+  if (!WK.goals.length) { $w('goals').innerHTML = '<p class="note">مفيش أهداف مربوطة بمهام الأسبوع ده.</p>'; return; }
+  $w('goals').innerHTML = WK.goals.map((g) => {
+    const s = goalStat(w, g), p = w > 0 ? goalStat(w - 1, g) : null, v = verdict(s.pct), open = ws.openGoal === g;
+    let pips = ''; for (let i = 0; i < Math.min(s.planned, 31); i++) pips += `<span class="pip" data-c="${i < s.done ? VCOL[v] : ''}"></span>`;
+    const ts = wkTasks(w, 'goal', g);
+    const list = ts.length ? ts.map(taskMini).join('') : '<li>مفيش مهام مربوطة بالهدف ده الأسبوع ده.</li>';
+    return `<button class="goal" data-g="${esc(g)}" aria-expanded="${open}">` +
+      `<div class="gh"><b>${esc(g)}</b><span class="tag ${v}">${VNAME[v]}</span></div>` +
+      `<div class="gm"><span>المعيار: ${s.target ? esc(s.target) : 'لسه ما اتكتبش'}</span><span><strong class="num">${s.done}</strong> من <span class="num">${s.planned}</span> · ${s.pct === null ? '—' : PCB(s.pct)}</span></div>` +
+      `<div class="pips" aria-hidden="true">${pips || '<span class="pip"></span>'}</div>` +
+      `<div class="gm" style="margin-bottom:0"><span>${w > 0 ? 'عن الأسبوع اللي فات' : 'أول أسبوع'}</span>${w > 0 ? deltaHTML(s.pct, p.pct, ' نقطة', true) : ''}</div>` +
+      `<div class="gt"><ul>${list}</ul></div></button>`;
+  }).join('');
+  later(() => $w('goals') && $w('goals').querySelectorAll('.pip').forEach((el) => { if (el.dataset.c) el.className = 'pip ' + el.dataset.c; }));
+}
+function renderPlan() {
+  const w = ws.w, items = [];
+  // ١. أضعف جانب.
+  const weak = aspectRank[0], zero = WK.aspects.filter((a) => wkTasks(w, 'aspect', a).length === 0);
+  if (weak) {
+    const z = zero.length ? ` وفيه <span class="num">${zero.length}</span> جوانب ما اتلمسوش خالص: ${zero.slice(0, 2).map((a) => '«' + esc(a) + '»').join(' و')}${zero.length > 2 ? ' وغيرهم' : ''}.` : '';
+    items.push({ t: `اديله وقت أكتر: جانب «${esc(weak.a)}»`, d: `خلص <span class="num">${weak.c.done}</span> من <span class="num">${weak.c.total}</span> بس (${PCB(weak.c.pct)})، وده أضعف جانب.${z}`, f: { kind: 'aspect', id: weak.a }, go: 'المهام' });
+  }
+  // ٢. الهدف الأحمر، أو الأضعف.
+  const gs = WK.goals.map((g) => ({ g, s: goalStat(w, g) })).filter((x) => x.s.pct !== null).sort((a, b) => a.s.pct - b.s.pct);
+  const red = gs.find((x) => verdict(x.s.pct) === 'bad');
+  if (red) {
+    items.push({ t: `رجّع هدف «${esc(red.g)}» على السكة`, d: `الحكم أحمر: اتعمل <span class="num">${red.s.done}</span> من <span class="num">${red.s.planned}</span>${red.s.target ? '، والمعيار ' + esc(red.s.target) : ''}. حط له ميعاد ثابت في الأسبوع.`, f: { kind: 'goal', id: red.g }, go: 'الهدف' });
+  } else if (gs[0]) {
+    items.push({ t: `مفيش هدف أحمر، كمّل على «${esc(gs[0].g)}»`, d: `ده أقل هدف عند ${PCB(gs[0].s.pct)} (<span class="num">${gs[0].s.done}</span> من <span class="num">${gs[0].s.planned}</span>).${gs[0].s.target ? ' المعيار ' + esc(gs[0].s.target) + '.' : ''}`, f: { kind: 'goal', id: gs[0].g }, go: 'الهدف' });
+  }
+  // ٣. المفتوح.
+  const open = wkTasks(w, 'open'), vis = open.filter((t) => !t.hidden), hid = open.length - vis.length;
+  const names = vis.slice(0, 2).map((t) => '«' + esc(t.t) + '»').join(' و');
+  const more = vis.length > 2 ? ` و<span class="num">${vis.length - 2}</span> غيرهم` : '';
+  const hidTxt = hid ? `${names ? '، و' : ''}<span class="num">${hid}</span> محمية` : '';
+  const out = WK.weeks[w].out;
+  if (open.length) items.push({ t: `رحّل <span class="num">${open.length}</span> ${TASKS_W(open.length)} لسه مفتوحة`, d: (names ? 'زي ' + names + more : '') + hidTxt + '.' + (out ? ` ودخّل <span class="num">${out}</span> حاجات لسه برّه البرنامج على TickTick.` : ''), f: { kind: 'open', id: 'open' }, go: 'المفتوح' });
+  const seals = ['١.', '٢.', '٣.'];
+  $w('plan').innerHTML = items.length ? items.slice(0, 3).map((it, i) =>
+    `<button class="pi" data-pk="${it.f.kind}" data-pid="${esc(it.f.id)}"><span class="seal">${seals[i]}</span><span><p class="pt">${it.t}</p><p class="pd">${it.d}</p></span><span class="go">${it.go}</span></button>`).join('')
+    : '<p class="note">مفيش حاجة طالعة من الأرقام الأسبوع ده.</p>';
+}
+function filterLabel(f) {
+  if (!f) return '';
+  if (f.id === NO_ASP || f.id === NO_PROJ) return `اللي ${f.id}`;
+  if (f.kind === 'aspect') return `جانب «${f.id}»`;
+  if (f.kind === 'project') return `مشروع «${f.id}»`;
+  if (f.kind === 'goal') return `هدف «${f.id}»`;
+  if (f.kind === 'open') return 'المفتوح بس';
+  return '';
+}
+function renderTasks() {
+  const f = ws.f;
+  let list = f ? wkTasks(ws.w, f.kind, f.id) : wkTasks(ws.w);
+  if (ws.s === 'open') list = list.filter((t) => !t.done);
+  if (ws.s === 'done') list = list.filter((t) => t.done);
+  const vis = list.filter((t) => !t.hidden), hid = list.filter((t) => t.hidden);
+  vis.sort((a, b) => (a.done - b.done) || (a.di - b.di));
+  $w('activeF').classList.toggle('on', !!f);
+  $w('activeFText').textContent = filterLabel(f);
+  $w('taskCount').innerHTML = `<span class="num">${list.length}</span> ${TASKS_W(list.length)}`;
+  let html = '', lastDone = null;
+  vis.forEach((t, i) => {
+    if (t.done !== lastDone && ws.s === 'all') { html += `<li class="sep">${t.done ? 'خلصت' : 'لسه مفتوحة'}</li>`; lastDone = t.done; }
+    html += `<li class="task${t.done ? ' dn' : ''}" style="animation-delay:${i * 25}ms">` +
+      `<span class="chk${t.done ? ' on' : ''}">${t.done ? '<svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.5 9.5 3.5"/></svg>' : ''}</span>` +
+      `<div><p class="tt">${esc(t.t)}</p><p class="tm">${esc(t.p)} · ${esc(t.a)}</p></div><span class="dy">${t.di >= 0 ? WK_DAYS[t.di] : ''}</span></li>`;
+  });
+  if (hid.length) {
+    const hd = hid.filter((t) => t.done).length;
+    html += `<li class="task lock"><span class="chk"><span class="emo" style="font-size:11px">🔒</span></span>` +
+      `<div><p class="tt">مهام محمية: <span class="num">${hid.length}</span></p><p class="tm">خلص منها <span class="num">${hd}</span> ولسه <span class="num">${hid.length - hd}</span> · العناوين ما بتظهرش هنا</p></div><span class="dy"></span></li>`;
+  }
+  if (!list.length) html = '<li class="empty">مفيش مهام هنا.</li>';
+  $w('tasks').innerHTML = html;
+  $w('tgl').textContent = $w('taskCard').classList.contains('closed') ? `اعرض المهام (${list.length})` : 'اقفل المهام';
+}
+const animateBars = (root) => later(() => root.querySelectorAll('.wk .bar i').forEach((el) => { el.style.width = el.dataset.w + '%'; }));
+function wkRenderAll() {
+  renderSeg(); renderHero(); renderDays(); renderAspects(); renderProjects(); renderGoals(); renderPlan(); renderTasks();
+  animateBars(app);
+}
+function renderFilterParts() {
+  renderAspects(); renderProjects(); renderDays(); renderTasks();
+  if (ws.f) $w('taskCard').classList.remove('closed');
+  renderTasks();
+  app.querySelectorAll('.wk .bar i').forEach((el) => { el.style.width = el.dataset.w + '%'; });
+}
+function setFilter(f, scroll) {
+  const same = ws.f && f && ws.f.kind === f.kind && ws.f.id === f.id;
+  ws.f = same ? null : f;
+  if (ws.f && ws.f.kind === 'open') { ws.s = 'all'; syncChips(); }
+  renderFilterParts();
+  if (scroll && ws.f) $w('taskCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+const syncChips = () => [...$w('stChips').children].forEach((b) => b.setAttribute('aria-pressed', b.dataset.s === ws.s));
+app.addEventListener('click', (e) => {
+  if (S.view !== 'week' || !WK || !e.target.closest('.wk')) return;
+  let b;
+  if ((b = e.target.closest('#weekSeg [data-w]'))) { ws.w = Number(b.dataset.w); ws.f = null; ws.openGoal = null; wkRenderAll(); return; }
+  if ((b = e.target.closest('.row, .rl'))) { setFilter({ kind: b.dataset.k, id: b.dataset.id }, false); return; }
+  if ((b = e.target.closest('.pi'))) {
+    const k = b.dataset.pk, id = b.dataset.pid;
+    if (k === 'goal') { ws.openGoal = id; renderGoals(); }
+    ws.f = null; setFilter({ kind: k, id }, true); return;
+  }
+  if ((b = e.target.closest('.goal'))) {
+    const g = b.dataset.g; ws.openGoal = ws.openGoal === g ? null : g;
+    app.querySelectorAll('.goal').forEach((x) => x.setAttribute('aria-expanded', x.dataset.g === ws.openGoal));
+    return;
+  }
+  if ((b = e.target.closest('#stChips button'))) { ws.s = b.dataset.s; syncChips(); renderTasks(); return; }
+  if (e.target.closest('#tgl')) { $w('taskCard').classList.toggle('closed'); renderTasks(); return; }
+  if (e.target.closest('#clearF')) { ws.f = null; renderFilterParts(); }
+});
+
 async function post(body) {
   const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ initData: tg.initData, ...body }) });
   if (r.status === 401 || r.status === 403) throw Object.assign(new Error('مش مسموح. اقفل اللوحة وافتحها تاني من زرار البوت.'), { shown: true });
@@ -615,6 +1122,13 @@ async function show() {
     if (S.view === 'commands') {
       const d = await post({ view: 'commands' });
       if (my === seq) renderCommands(d.commands || []);
+      return;
+    }
+    // الأسبوع فرع لوحده: رده مالوش دعوة بأرقام الفلوس، وبيتصدّق دقيقتين زيها.
+    if (S.view === 'week') {
+      const c = cache.week;
+      if (!c || Date.now() - c.at > FRESH_MS) cache.week = { at: Date.now(), d: await post({ view: 'week' }) };
+      if (my === seq) renderWeek(cache.week.d.week);
       return;
     }
     const d = await getData(S.view === 'reports' ? 'month' : S.period);
@@ -674,7 +1188,7 @@ sheet.addEventListener('click', (e) => {
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
 document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; open.accounts = false; closeSheet(); show(); }));
 const startTab = new URLSearchParams(location.search).get('tab');
-if (['tx', 'stats', 'reports', 'commands'].includes(startTab)) S.view = startTab;
+if (['tx', 'stats', 'reports', 'commands', 'week'].includes(startTab)) S.view = startTab;
 show();
 </script>
 </body>
