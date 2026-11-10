@@ -331,8 +331,7 @@
     <button data-v="tx" class="on"><i>🧾</i>المعاملات</button>
     <button data-v="stats"><i>📊</i>الإحصائيات</button>
     <button data-v="reports"><i>📑</i>التقارير</button>
-    <button data-v="commands"><i>📋</i>الأوامر</button>
-    <button data-v="week"><i>🗓️</i>الأسبوع</button>
+        <button data-v="week"><i>🗓️</i>الأسبوع</button>
   </div>
 </header>
 <main id="app"><div class="msg">بيحمّل…</div></main>
@@ -1208,7 +1207,7 @@ sheet.addEventListener('click', (e) => {
 if (tg && tg.BackButton) tg.BackButton.onClick(goBack);
 document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => { S.view = b.dataset.v; S.cat = null; open.accounts = false; closeSheet(); show(); }));
 const startTab = new URLSearchParams(location.search).get('tab');
-if (['tx', 'stats', 'reports', 'commands', 'week'].includes(startTab)) S.view = startTab;
+if (['tx', 'stats', 'reports', 'week'].includes(startTab)) S.view = startTab;
 show();
 </script>
 </body>
